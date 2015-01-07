@@ -1,34 +1,34 @@
-require 'formula'
+require "formula"
 
 class Ruby < Formula
-  homepage 'https://www.ruby-lang.org/'
-  url "http://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.2.tar.bz2"
-  sha256 "6948b02570cdfb89a8313675d4aa665405900e27423db408401473f30fc6e901"
+  homepage "https://www.ruby-lang.org/"
+  url "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.bz2"
+  sha256 "1c031137999f832f86be366a71155113675b72420830ce432b777a0ff4942955"
 
   bottle do
-    sha1 "9c7a61fa34c47d0c48a23bf28a0d4c9a3f31b273" => :mavericks
-    sha1 "e9e8b27b822b331083f268ac78688e6195d5334a" => :mountain_lion
-    sha1 "ccd62b5dd83229a8dfaf57abf8c1ec131b50b17e" => :lion
+    sha1 "8591ec9c138a4850a030f78d5ae3e4facc2ad6ba" => :yosemite
+    sha1 "6ac700f32dab5b284bc765c61177fc17e72c425a" => :mavericks
+    sha1 "c1d79e729e6e899b2237f384c9cb1a38e749d2b2" => :mountain_lion
   end
 
   head do
-    url 'http://svn.ruby-lang.org/repos/ruby/trunk/'
-    depends_on :autoconf
+    url "http://svn.ruby-lang.org/repos/ruby/trunk/"
+    depends_on "autoconf" => :build
   end
 
   option :universal
-  option 'with-suffix', 'Suffix commands with "21"'
-  option 'with-doc', 'Install documentation'
-  option 'with-tcltk', 'Install with Tcl/Tk support'
+  option "with-suffix", "Suffix commands with '22'"
+  option "with-doc", "Install documentation"
+  option "with-tcltk", "Install with Tcl/Tk support"
 
-  depends_on 'pkg-config' => :build
-  depends_on 'readline' => :recommended
-  depends_on 'gdbm' => :optional
-  depends_on 'gmp' => :optional
-  depends_on 'libffi' => :optional
-  depends_on 'libyaml'
-  depends_on 'openssl'
-  depends_on :x11 if build.with? 'tcltk'
+  depends_on "pkg-config" => :build
+  depends_on "readline" => :recommended
+  depends_on "gdbm" => :optional
+  depends_on "gmp" => :optional
+  depends_on "libffi" => :optional
+  depends_on "libyaml"
+  depends_on "openssl"
+  depends_on :x11 if build.with? "tcltk"
 
   fails_with :llvm do
     build 2326
@@ -37,13 +37,25 @@ class Ruby < Formula
   def install
     system "autoconf" if build.head?
 
-    args = %W[--prefix=#{prefix} --enable-shared --disable-silent-rules]
-    args << "--program-suffix=21" if build.with? "suffix"
-    args << "--with-arch=#{Hardware::CPU.universal_archs.join(',')}" if build.universal?
+    args = %W[
+      --prefix=#{prefix} --enable-shared --disable-silent-rules
+      --with-sitedir=#{HOMEBREW_PREFIX}/lib/ruby/site_ruby
+      --with-vendordir=#{HOMEBREW_PREFIX}/lib/ruby/vendor_ruby
+    ]
+
+    if build.universal?
+      ENV.universal_binary
+      args << "--with-arch=#{Hardware::CPU.universal_archs.join(",")}"
+    end
+
+    args << "--program-suffix=22" if build.with? "suffix"
     args << "--with-out-ext=tk" if build.without? "tcltk"
     args << "--disable-install-doc" if build.without? "doc"
     args << "--disable-dtrace" unless MacOS::CLT.installed?
     args << "--without-gmp" if build.without? "gmp"
+
+    # Reported upstream: https://bugs.ruby-lang.org/issues/10272
+    args << "--with-setjmp-type=setjmp" if MacOS.version == :lion
 
     paths = [
       Formula["libyaml"].opt_prefix,
@@ -58,35 +70,86 @@ class Ruby < Formula
 
     system "./configure", *args
     system "make"
-    system "make install"
+    system "make", "install"
   end
 
   def post_install
-    # Put gem, site and vendor folders in the HOMEBREW_PREFIX
-    ruby_lib = HOMEBREW_PREFIX/"lib/ruby"
-    (ruby_lib/'site_ruby').mkpath
-    (ruby_lib/'vendor_ruby').mkpath
-    (ruby_lib/'gems').mkpath
-
-    rm_rf Dir["#{lib}/ruby/{site_ruby,vendor_ruby,gems}"]
-    (lib/'ruby').install_symlink ruby_lib/'site_ruby',
-                                 ruby_lib/'vendor_ruby',
-                                 ruby_lib/'gems'
+    # Customize rubygems to look/install in the global gem directory
+    # instead of in the Cellar, making gems last across reinstalls
+    (lib/"ruby/#{abi_version}/rubygems/defaults/operating_system.rb").write rubygems_config
   end
 
-  def caveats; <<-EOS.undent
-    By default, gem installed executables will be placed into:
-      #{opt_bin}
+  def abi_version
+    "2.2.0"
+  end
 
-    You may want to add this to your PATH. After upgrades, you can run
-      gem pristine --all --only-executables
+  def rubygems_config; <<-EOS.undent
+    module Gem
+      class << self
+        alias :old_default_dir :default_dir
+        alias :old_default_path :default_path
+        alias :old_default_bindir :default_bindir
+        alias :old_ruby :ruby
+      end
 
-    to restore binstubs for installed gems.
+      def self.default_dir
+        path = [
+          "#{HOMEBREW_PREFIX}",
+          "lib",
+          "ruby",
+          "gems",
+          "#{abi_version}"
+        ]
+
+        @default_dir ||= File.join(*path)
+      end
+
+      def self.private_dir
+        path = if defined? RUBY_FRAMEWORK_VERSION then
+                 [
+                   File.dirname(RbConfig::CONFIG['sitedir']),
+                   'Gems',
+                   RbConfig::CONFIG['ruby_version']
+                 ]
+               elsif RbConfig::CONFIG['rubylibprefix'] then
+                 [
+                  RbConfig::CONFIG['rubylibprefix'],
+                  'gems',
+                  RbConfig::CONFIG['ruby_version']
+                 ]
+               else
+                 [
+                   RbConfig::CONFIG['libdir'],
+                   ruby_engine,
+                   'gems',
+                   RbConfig::CONFIG['ruby_version']
+                 ]
+               end
+
+        @private_dir ||= File.join(*path)
+      end
+
+      def self.default_path
+        if Gem.user_home && File.exist?(Gem.user_home)
+          [user_dir, default_dir, private_dir]
+        else
+          [default_dir, private_dir]
+        end
+      end
+
+      def self.default_bindir
+        "#{HOMEBREW_PREFIX}/bin"
+      end
+
+      def self.ruby
+        "#{opt_bin}/ruby#{"22" if build.with? "suffix"}"
+      end
+    end
     EOS
   end
 
   test do
-    output = `#{bin}/ruby -e 'puts "hello"'`
+    output = `#{bin}/ruby -e "puts 'hello'"`
     assert_equal "hello\n", output
     assert_equal 0, $?.exitstatus
   end

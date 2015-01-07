@@ -2,13 +2,13 @@ require 'formula'
 
 class Strongswan < Formula
   homepage 'http://www.strongswan.org'
-  url 'http://download.strongswan.org/strongswan-5.1.3.tar.bz2'
-  sha1 '6f8898308999b8fc293812ea5812a12c9ddbedc7'
+  url 'http://download.strongswan.org/strongswan-5.2.1.tar.bz2'
+  sha1 '3035fc0c38e0698b0d85a94dbc25944abd2a8722'
 
   bottle do
-    sha1 "7a63c925dde5195c98e3e63dc3fb6eb963eac106" => :mavericks
-    sha1 "f4e35b174358d712e8fab4bee12a7a864860b05c" => :mountain_lion
-    sha1 "a6006954a5d396d2822212bec774f7a4b863e19f" => :lion
+    sha1 "ebcf0937245258aede64c79278f96f2bd9b50756" => :yosemite
+    sha1 "1e35a8281bfb5c3341fb9bb004a79f141f88eedb" => :mavericks
+    sha1 "38635c861ee0e8e8ac5638734e58b9415256d378" => :mountain_lion
   end
 
   option 'with-curl', 'Build with libcurl based fetcher'
@@ -41,12 +41,14 @@ class Strongswan < Formula
       --enable-pgp
       --enable-pkcs1
       --enable-pkcs8
+      --enable-pki
       --enable-pubkey
       --enable-revocation
+      --enable-scepclient
       --enable-socket-default
       --enable-sshkey
       --enable-stroke
-      --enable-tools
+      --enable-swanctl
       --enable-updown
       --enable-unity
       --enable-xauth-generic
@@ -54,12 +56,6 @@ class Strongswan < Formula
     args << "--enable-curl" if build.with? 'curl'
     args << "--enable-kernel-pfkey" if build.without? 'suite-b'
     args << "--enable-kernel-libipsec" if build.with? 'suite-b'
-
-    # problem with weak reference, will be fixed in the next release
-    inreplace "src/libstrongswan/utils/test.c" do |s|
-      s.gsub! /__attribute__.+$/, "{}"
-      s.gsub! /!testable_functions_create/, "TRUE"
-    end
 
     system "./configure", *args
     system "make", "install"

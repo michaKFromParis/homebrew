@@ -8,6 +8,7 @@ class Kafka < Formula
   sha1 "104c15d22da36216a678e6a0c3243c552e47af87"
 
   depends_on "zookeeper"
+  depends_on :java => "1.7"
 
   def install
     system "./gradlew", "jar"
@@ -41,8 +42,11 @@ class Kafka < Formula
       kafka-server-start.sh #{etc}/kafka/server.properties
 
     Gradle's Scala plugin is not Java 8 compatible, so you may have to
-    use an older version of Java, see:
+    use Java 7, see:
       http://issues.gradle.org/browse/GRADLE-3023
+
+    If you have Java 7 installed along with other versions, try:
+      JAVA_HOME=$(/usr/libexec/java_home -v 1.7) brew install kafka
     EOS
   end
 end

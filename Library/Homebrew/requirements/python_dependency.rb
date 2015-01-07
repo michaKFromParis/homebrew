@@ -3,6 +3,7 @@ require "language/python"
 class PythonDependency < Requirement
   fatal true
   default_formula "python"
+  cask "python"
 
   satisfy :build_env => false do
     python = which_python
@@ -14,7 +15,7 @@ class PythonDependency < Requirement
   end
 
   def pour_bottle?
-    tags.include?(:build) || system_python?
+    build? || system_python?
   end
 
   def modify_build_environment
@@ -51,6 +52,7 @@ end
 class Python3Dependency < PythonDependency
   fatal true
   default_formula "python3"
+  cask "python3"
 
   satisfy(:build_env => false) { which_python }
 

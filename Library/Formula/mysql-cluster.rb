@@ -86,8 +86,8 @@ class MysqlCluster < Formula
     (var+"mysql-cluster/ndb_data").mkpath
     (var+"mysql-cluster/mysqld_data").mkpath
     (var+"mysql-cluster/conf").mkpath
-    (var+"mysql-cluster/conf/my.cnf").write my_cnf unless File.exists? var+"mysql-cluster/conf/my.cnf"
-    (var+"mysql-cluster/conf/config.ini").write config_ini unless File.exists? var+"mysql-cluster/conf/config.ini"
+    (var+"mysql-cluster/conf/my.cnf").write my_cnf unless File.exist? var+"mysql-cluster/conf/my.cnf"
+    (var+"mysql-cluster/conf/config.ini").write config_ini unless File.exist? var+"mysql-cluster/conf/config.ini"
 
     plist_path('ndb_mgmd').write ndb_mgmd_startup_plist('ndb_mgmd')
     plist_path('ndb_mgmd').chmod 0644
@@ -127,7 +127,7 @@ class MysqlCluster < Formula
 
     Set up databases to run AS YOUR USER ACCOUNT with:
       unset TMPDIR
-      mysql_install_db --verbose --user=`whoami` --basedir="$(brew --prefix mysql-cluster)" --datadir=#{var}/mysql-cluster/mysqld_data --tmpdir=/tmp
+      mysql_install_db --verbose --user=`whoami` --basedir="#{opt_prefix}" --datadir=#{var}/mysql-cluster/mysqld_data --tmpdir=/tmp
 
     For a first cluster, you may start with a single MySQL Server (mysqld),
     a pair of Data Nodes (ndbd) and a single management node (ndb_mgmd):

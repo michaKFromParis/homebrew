@@ -1,12 +1,20 @@
-require 'formula'
+require "formula"
 
 class SilcClient < Formula
-  homepage 'http://silcnet.org/software/users/client/'
-  url 'https://downloads.sourceforge.net/project/silc/silc/client/sources/silc-client-1.1.10.tar.gz'
-  sha1 '78c5ed2977c2dd4f3d9852e1ab09ba06a433feba'
+  homepage "http://silcnet.org/client.html"
+  url "https://downloads.sourceforge.net/project/silc/silc/client/sources/silc-client-1.1.11.tar.gz"
+  sha256 "8cedf2f3c15322296afe094de60504bc27e349f1942713a2f322c7ef6ad5089e"
+  bottle do
+    sha1 "3222c80d0b58f752bab07c29679dc0585d43d067" => :yosemite
+    sha1 "32093a6a21e593f2f5300b5cd933de720b76768f" => :mavericks
+    sha1 "b62f58cf75a826116df89a50015c20806c186d33" => :mountain_lion
+  end
 
-  depends_on 'pkg-config' => :build
-  depends_on 'glib'
+  revision 1
+
+  depends_on "pkg-config" => :build
+  depends_on "glib"
+  depends_on "openssl"
 
   def install
     system "./configure", "--disable-debug",
@@ -19,7 +27,7 @@ class SilcClient < Formula
                           "--with-socks",
                           "--disable-asm"
     system "make"
-    system "make install"
+    system "make", "install"
   end
 
   test do

@@ -1,24 +1,32 @@
-require 'formula'
-
 class TheSilverSearcher < Formula
-  homepage 'https://github.com/ggreer/the_silver_searcher'
-  head 'https://github.com/ggreer/the_silver_searcher.git'
-  url 'https://github.com/ggreer/the_silver_searcher/archive/0.21.0.tar.gz'
-  sha1 '86503dea202a0eca44a4207a97aa89e1d2353979'
+  homepage "https://github.com/ggreer/the_silver_searcher"
+  head "https://github.com/ggreer/the_silver_searcher.git"
+  url "https://github.com/ggreer/the_silver_searcher/archive/0.28.0.tar.gz"
+  sha1 "95ef49e671db12ee56c883fe8f6e7b0a0ce18b81"
 
   bottle do
     cellar :any
-    sha1 "7f7c99a2238b58238ff74afa603a09c88a4b189a" => :mavericks
-    sha1 "8c3f0b4d6f22bd18aaed2ab38268fdf99e38d235" => :mountain_lion
-    sha1 "2370144c028fe38daef2c38163d9035d06d3adaa" => :lion
+    sha1 "b4e0e52e77832392ee1c3d81dd4da1ea80b61438" => :yosemite
+    sha1 "4012d3528d1a14016de75fcb51cbf7982279eaba" => :mavericks
+    sha1 "bae086726850153caa7566f8fe1ebf239faeb46b" => :mountain_lion
   end
 
-  depends_on :automake
-  depends_on :autoconf
+  depends_on "autoconf" => :build
+  depends_on "automake" => :build
 
-  depends_on 'pkg-config' => :build
-  depends_on 'pcre'
-  depends_on 'xz'
+  depends_on "pkg-config" => :build
+  depends_on "pcre"
+  depends_on "xz"
+
+  # Edit bash completion script to not require bash-completion
+  # The `have ag` test is redundant in any case, since the script will only
+  # be installed if Ag itself is installed. See:
+  # https://github.com/ggreer/the_silver_searcher/issues/208
+  # https://github.com/Homebrew/homebrew/issues/27418
+  patch do
+    url "https://github.com/thomasf/the_silver_searcher/commit/867dff8631bc80d760268f653265e4d3caf44f16.diff"
+    sha1 "09502c60a11658d9a08a6825e78defad96318bd9"
+  end
 
   def install
     # Stable tarball does not include pre-generated configure script
@@ -32,10 +40,11 @@ class TheSilverSearcher < Formula
     system "make"
     system "make install"
 
-    bash_completion.install 'ag.bashcomp.sh'
+    bash_completion.install "ag.bashcomp.sh"
   end
 
   test do
-    system "#{bin}/ag", "--version"
+    (testpath/"Hello.txt").write("Hello World!")
+    system "#{bin}/ag", "Hello World!", testpath
   end
 end

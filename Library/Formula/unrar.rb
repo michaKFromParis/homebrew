@@ -2,8 +2,15 @@ require 'formula'
 
 class Unrar < Formula
   homepage 'http://www.rarlab.com'
-  url 'http://www.rarlab.com/rar/unrarsrc-5.1.5.tar.gz'
-  sha1 'a25fd20ad18afc053d100eecf8a56aa7490cfdca'
+  url 'http://www.rarlab.com/rar/unrarsrc-5.2.3.tar.gz'
+  sha1 '31e7dad7424635e7a3ae823b5dd9e50db54393ec'
+
+  bottle do
+    cellar :any
+    sha1 "5c3d060feb9868d4202b1bff08629029d35a4750" => :yosemite
+    sha1 "3ce2295bc0a90243b0c71219c53e95685d79d1ca" => :mavericks
+    sha1 "8e0e4373750950fde98da68cf3ee247ddfb02558" => :mountain_lion
+  end
 
   def install
     system "make"
@@ -16,7 +23,7 @@ class Unrar < Formula
     data =  'UmFyIRoHAM+QcwAADQAAAAAAAACaCHQggDIACQAAAAkAAAADtPej1LZwZE' +
             'QUMBIApIEAAGRpcmVjdG9yeVxmaWxlLnR4dEhvbWVicmV3CsQ9ewBABwA='
 
-    rarpath.write data.unpack('m')
+    rarpath.write data.unpack('m').first
     assert_equal contentpath, `#{bin}/unrar lb #{rarpath}`.strip
     assert_equal 0, $?.exitstatus
 

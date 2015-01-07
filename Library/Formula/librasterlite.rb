@@ -6,6 +6,14 @@ class Librasterlite < Formula
   sha1 '87f0abab90600db64a7d468343163e760769f0c7'
   revision 1
 
+  bottle do
+    cellar :any
+    revision 2
+    sha1 "bc1d50a1363cd3f6827fa512ae5412ace413a1b9" => :yosemite
+    sha1 "86cde48b326df5915f2c2efd1b0d335f79b7bcbd" => :mavericks
+    sha1 "74b25b3d5ddbeeb8510026a7a8a918193600b9fc" => :mountain_lion
+  end
+
   depends_on "pkg-config" => :build
   depends_on "libpng"
   depends_on "libgeotiff"

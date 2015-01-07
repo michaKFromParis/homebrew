@@ -1,9 +1,9 @@
-require 'formula'
+require "formula"
 
 class Hadoop < Formula
-  homepage 'http://hadoop.apache.org/'
-  url 'http://www.apache.org/dyn/closer.cgi?path=hadoop/core/hadoop-2.4.0/hadoop-2.4.0.tar.gz'
-  sha1 'fc94bb5cb6c50a09fd9fd3ed5e134893ccdf1dbe'
+  homepage "http://hadoop.apache.org/"
+  url "http://www.apache.org/dyn/closer.cgi?path=hadoop/common/hadoop-2.6.0/hadoop-2.6.0.tar.gz"
+  sha1 "5b5fb72445d2e964acaa62c60307168c009d57c5"
 
   def install
     rm_f Dir["bin/*.cmd", "sbin/*.cmd", "libexec/*.cmd", "etc/hadoop/*.cmd"]
@@ -11,7 +11,7 @@ class Hadoop < Formula
     bin.write_exec_script Dir["#{libexec}/bin/*"]
     sbin.write_exec_script Dir["#{libexec}/sbin/*"]
     # But don't make rcc visible, it conflicts with Qt
-    (bin/'rcc').unlink
+    (bin/"rcc").unlink
 
     inreplace "#{libexec}/etc/hadoop/hadoop-env.sh",
       "export JAVA_HOME=${JAVA_HOME}",

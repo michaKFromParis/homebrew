@@ -3,6 +3,7 @@ require 'exceptions'
 require 'os/mac'
 require 'utils/json'
 require 'utils/inreplace'
+require 'utils/popen'
 require 'open-uri'
 
 class Tty
@@ -44,7 +45,7 @@ end
 def ohai title, *sput
   title = Tty.truncate(title) if $stdout.tty? && !ARGV.verbose?
   puts "#{Tty.blue}==>#{Tty.white} #{title}#{Tty.reset}"
-  puts sput unless sput.empty?
+  puts sput
 end
 
 def oh1 title
@@ -53,13 +54,11 @@ def oh1 title
 end
 
 def opoo warning
-  STDERR.puts "#{Tty.red}Warning#{Tty.reset}: #{warning}"
+  $stderr.puts "#{Tty.red}Warning#{Tty.reset}: #{warning}"
 end
 
 def onoe error
-  lines = error.to_s.split("\n")
-  STDERR.puts "#{Tty.red}Error#{Tty.reset}: #{lines.shift}"
-  STDERR.puts lines unless lines.empty?
+  $stderr.puts "#{Tty.red}Error#{Tty.reset}: #{error}"
 end
 
 def ofail error
@@ -78,6 +77,10 @@ def pretty_duration s
   return "%.1f minutes" % (s/60)
 end
 
+def plural n, s="s"
+  (n == 1) ? "" : s
+end
+
 def interactive_shell f=nil
   unless f.nil?
     ENV['HOMEBREW_DEBUG_PREFIX'] = f.prefix
@@ -86,9 +89,13 @@ def interactive_shell f=nil
 
   Process.wait fork { exec ENV['SHELL'] }
 
-  unless $?.success?
+  if $?.success?
+    return
+  elsif $?.exited?
     puts "Aborting due to non-zero exit status"
-    exit $?
+    exit $?.exitstatus
+  else
+    raise $?.inspect
   end
 end
 
@@ -98,11 +105,36 @@ module Homebrew
     pid = fork do
       yield if block_given?
       args.collect!{|arg| arg.to_s}
-      exec(cmd.to_s, *args) rescue nil
+      exec(cmd, *args) rescue nil
       exit! 1 # never gets here unless exec failed
     end
     Process.wait(pid)
     $?.success?
+  end
+
+  def self.git_head
+    HOMEBREW_REPOSITORY.cd { `git rev-parse --verify -q HEAD 2>/dev/null`.chuzzle }
+  end
+
+  def self.git_last_commit
+    HOMEBREW_REPOSITORY.cd { `git show -s --format="%cr" HEAD 2>/dev/null`.chuzzle }
+  end
+
+  def self.install_gem_setup_path! gem, executable=gem
+    require "rubygems"
+    ENV["PATH"] = "#{Gem.user_dir}/bin:#{ENV["PATH"]}"
+
+    unless quiet_system "gem", "list", "--installed", gem
+      safe_system "gem", "install", "--no-ri", "--no-rdoc",
+                                    "--user-install", gem
+    end
+
+    unless which executable
+      odie <<-EOS.undent
+        The '#{gem}' gem is installed but couldn't find '#{executable}' in the PATH:
+        #{ENV["PATH"]}
+      EOS
+    end
   end
 end
 
@@ -116,10 +148,7 @@ end
 
 # Kernel.system but with exceptions
 def safe_system cmd, *args
-  unless Homebrew.system cmd, *args
-    args = args.map{ |arg| arg.to_s.gsub " ", "\\ " } * " "
-    raise ErrorDuringExecution, "Failure while executing: #{cmd} #{args}"
-  end
+  Homebrew.system(cmd, *args) or raise ErrorDuringExecution.new(cmd, args)
 end
 
 # prints no output
@@ -170,40 +199,48 @@ def puts_columns items, star_items=[]
 end
 
 def which cmd, path=ENV['PATH']
-  path.split(File::PATH_SEPARATOR).find do |p|
-    pcmd = File.join(p, cmd)
-    return Pathname.new(pcmd) if File.executable?(pcmd) && !File.directory?(pcmd)
+  path.split(File::PATH_SEPARATOR).each do |p|
+    pcmd = File.expand_path(cmd, p)
+    return Pathname.new(pcmd) if File.file?(pcmd) && File.executable?(pcmd)
   end
   return nil
 end
 
 def which_editor
   editor = ENV.values_at('HOMEBREW_EDITOR', 'VISUAL', 'EDITOR').compact.first
-  # If an editor wasn't set, try to pick a sane default
   return editor unless editor.nil?
 
   # Find Textmate
-  return 'mate' if which "mate"
+  editor = "mate" if which "mate"
   # Find BBEdit / TextWrangler
-  return 'edit' if which "edit"
-  # Default to vim
-  return '/usr/bin/vim'
+  editor ||= "edit" if which "edit"
+  # Find vim
+  editor ||= "vim" if which "vim"
+  # Default to standard vim
+  editor ||= "/usr/bin/vim"
+
+  opoo <<-EOS.undent
+    Using #{editor} because no editor was set in the environment.
+    This may change in the future, so we recommend setting EDITOR, VISUAL,
+    or HOMEBREW_EDITOR to your preferred text editor.
+  EOS
+
+  editor
 end
 
 def exec_editor *args
-  return if args.to_s.empty?
   safe_exec(which_editor, *args)
 end
 
 def exec_browser *args
-  browser = ENV['HOMEBREW_BROWSER'] || ENV['BROWSER'] || "open"
+  browser = ENV['HOMEBREW_BROWSER'] || ENV['BROWSER'] || OS::PATH_OPEN
   safe_exec(browser, *args)
 end
 
 def safe_exec cmd, *args
   # This buys us proper argument quoting and evaluation
   # of environment variables in the cmd parameter.
-  exec "/bin/sh", "-i", "-c", cmd + ' "$@"', "--", *args
+  exec "/bin/sh", "-c", "#{cmd} \"$@\"", "--", *args
 end
 
 # GZips the given paths, and returns the gzipped paths
@@ -234,12 +271,12 @@ def nostdout
     yield
   else
     begin
-      require 'stringio'
-      real_stdout = $stdout
-      $stdout = StringIO.new
+      out = $stdout.dup
+      $stdout.reopen("/dev/null")
       yield
     ensure
-      $stdout = real_stdout
+      $stdout.reopen(out)
+      out.close
     end
   end
 end
@@ -293,7 +330,7 @@ module GitHub extend self
     # This is a no-op if the user is opting out of using the GitHub API.
     return if ENV['HOMEBREW_NO_GITHUB_API']
 
-    require 'net/https' # for exception classes below
+    require "net/https"
 
     default_headers = {
       "User-Agent" => HOMEBREW_USER_AGENT,
@@ -301,15 +338,18 @@ module GitHub extend self
     }
 
     default_headers['Authorization'] = "token #{HOMEBREW_GITHUB_API_TOKEN}" if HOMEBREW_GITHUB_API_TOKEN
-    Kernel.open(url, default_headers.merge(headers)) do |f|
-      yield Utils::JSON.load(f.read)
+
+    begin
+      Kernel.open(url, default_headers.merge(headers)) do |f|
+        yield Utils::JSON.load(f.read)
+      end
+    rescue OpenURI::HTTPError => e
+      handle_api_error(e)
+    rescue EOFError, SocketError, OpenSSL::SSL::SSLError => e
+      raise Error, "Failed to connect to: #{url}\n#{e.message}", e.backtrace
+    rescue Utils::JSON::Error => e
+      raise Error, "Failed to parse JSON response\n#{e.message}", e.backtrace
     end
-  rescue OpenURI::HTTPError => e
-    handle_api_error(e)
-  rescue SocketError, OpenSSL::SSL::SSLError => e
-    raise Error, "Failed to connect to: #{url}\n#{e.message}", e.backtrace
-  rescue Utils::JSON::Error => e
-    raise Error, "Failed to parse JSON response\n#{e.message}", e.backtrace
   end
 
   def handle_api_error(e)

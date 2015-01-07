@@ -6,13 +6,21 @@ class Libiscsi < Formula
   sha1 'b65de46e9a688078211c1ef8f8a5af2a828d71a6'
   head 'https://github.com/sahlberg/libiscsi.git'
 
+  bottle do
+    cellar :any
+    revision 1
+    sha1 "5bc5b53461a7564d9721c7b468d37fbdbae564a2" => :yosemite
+    sha1 "e53c4947c7747b1d4cd1e9f36c88a16e200c4866" => :mavericks
+    sha1 "2edaf3c3a74dcb17365ef51d8d460939f0a5594c" => :mountain_lion
+  end
+
   option 'with-noinst', 'Install the noinst binaries (e.g. iscsi-test-cu)'
 
-  depends_on 'cunit' if build.with? 'noinst'
-  depends_on 'popt'
-  depends_on :autoconf
-  depends_on :automake
-  depends_on :libtool
+  depends_on "autoconf" => :build
+  depends_on "automake" => :build
+  depends_on "libtool" => :build
+  depends_on "cunit" if build.with? "noinst"
+  depends_on "popt"
 
   def install
     if build.with? 'noinst'

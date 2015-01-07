@@ -1,26 +1,33 @@
-require 'formula'
+require "formula"
 
 class Bash < Formula
-  homepage 'http://www.gnu.org/software/bash/'
+  homepage "http://www.gnu.org/software/bash/"
 
   stable do
     url "http://ftpmirror.gnu.org/bash/bash-4.3.tar.gz"
+
     mirror "http://ftp.gnu.org/gnu/bash/bash-4.3.tar.gz"
     sha256 "afc687a28e0e24dc21b988fa159ff9dbcf6b7caa92ade8645cc6d5605cd024d4"
-    version "4.3.11"
+    version "4.3.30"
 
     # Vendor the patches. The mirrors are unreliable for getting the patches,
     # and the more patches there are, the more unreliable they get. Upstream
     # patches can be found in: http://git.savannah.gnu.org/cgit/bash.git
     patch do
-      url "https://gist.githubusercontent.com/jacknagel/10594061/raw/65a32e9329e0d1198b06e21542de6103bcc3549e/bash-4.3-001-011.patch"
-      sha1 "803fd4452aa071bc87b86a1d38d86acba4dc2a62"
+      url "https://gist.githubusercontent.com/jacknagel/c1cf23775c774e2b4b6d/raw/c2b0a715efbc8a302741e6b682605940042fc2b8/bash-4.3.30.diff"
+      sha1 "61996c0a78d2d07184576783a56a7b315eb16d55"
     end
   end
 
-  head 'git://git.savannah.gnu.org/bash.git'
+  bottle do
+    sha1 "90cb996eec0339748d484b6c9634291040e5465d" => :mavericks
+    sha1 "d58702a5c70288a53369068bf1e45be31fa1bf34" => :mountain_lion
+    sha1 "b3fbee0555740fe7b0331f9418df807004adf7aa" => :lion
+  end
 
-  depends_on 'readline'
+  head "git://git.savannah.gnu.org/bash.git"
+
+  depends_on "readline"
 
   def install
     # When built with SSH_SOURCE_BASHRC, bash will source ~/.bashrc when
@@ -42,8 +49,6 @@ class Bash < Formula
   end
 
   test do
-    output = `#{bin}/bash -c "echo hello"`.strip
-    assert_equal "hello", output
-    assert_equal 0, $?.exitstatus
+    assert_equal "hello", shell_output("#{bin}/bash -c \"echo hello\"").strip
   end
 end

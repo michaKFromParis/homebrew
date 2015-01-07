@@ -2,10 +2,11 @@ require 'formula'
 
 class Hive < Formula
   homepage 'http://hive.apache.org'
-  url 'http://www.apache.org/dyn/closer.cgi?path=hive/hive-0.13.0/apache-hive-0.13.0-bin.tar.gz'
-  sha1 '91cfded252a54ff1ef23a5713d96df0268e4ce25'
+  url 'http://www.apache.org/dyn/closer.cgi?path=hive/hive-0.14.0/apache-hive-0.14.0-bin.tar.gz'
+  sha1 '8268ca84870f10f1ab163b87c2c7e6b0bbd39744'
 
   depends_on 'hadoop'
+  conflicts_with 'apache-spark', :because => 'both install `beeline` binaries'
 
   def install
     rm_f Dir["bin/*.bat"]

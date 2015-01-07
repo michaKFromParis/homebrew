@@ -2,8 +2,14 @@ require 'formula'
 
 class Gwyddion < Formula
   homepage 'http://gwyddion.net/'
-  url 'https://downloads.sourceforge.net/project/gwyddion/gwyddion/2.36/gwyddion-2.36.tar.xz'
-  sha1 '0e81bbc3dbb0aadf5ab2ecb0606bd79a12681be2'
+  url 'http://gwyddion.net/download/2.39/gwyddion-2.39.tar.gz'
+  sha1 '05ae35544b2f68939f6474fc8edb1f0395d10427'
+
+  bottle do
+    sha1 "6248a7dc780ba3cbea3aad2ae8682183445a112d" => :yosemite
+    sha1 "998824b3b4b87fae0a638a1c68ff8570ba51c4a5" => :mavericks
+    sha1 "5b92dafd899ac4550b066680fb1457d1205cb4de" => :mountain_lion
+  end
 
   depends_on :x11 => :optional
   depends_on 'pkg-config' => :build
@@ -15,10 +21,6 @@ class Gwyddion < Formula
   depends_on 'pygtk' if build.with? 'python'
   depends_on 'gtksourceview' if build.with? 'python'
 
-  # Fixes the search path for the standalone Python module
-  # See: <http://sourceforge.net/p/gwyddion/mailman/message/32267170/>
-  patch :DATA
-
   def install
     system "./configure", "--disable-dependency-tracking",
                           "--disable-desktop-file-update",
@@ -27,16 +29,3 @@ class Gwyddion < Formula
     system "make install"
   end
 end
-
-__END__
---- a/modules/pygwy/gwy.c	(revision 16160)
-+++ b/modules/pygwy/gwy.c	(working copy)
-@@ -94,7 +94,7 @@
-     guint i;
-
-     for (i = 0; i < G_N_ELEMENTS(gwyddion_libs); i++) {
--        gchar *filename = g_strconcat(gwyddion_libs[i], ".", G_MODULE_SUFFIX,
-+        gchar *filename = g_strconcat(gwyddion_libs[i], ".dylib",
-                                       NULL);
-         GModule *modhandle = g_module_open(filename, G_MODULE_BIND_LAZY);
-         if (!modhandle) {

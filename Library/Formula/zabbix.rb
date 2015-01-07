@@ -1,18 +1,24 @@
-require 'formula'
+require "formula"
 
 class Zabbix < Formula
-  homepage 'http://www.zabbix.com/'
-  url 'https://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/2.2.3/zabbix-2.2.3.tar.gz'
-  sha1 '23a7363e3af1d44cd74f22cdd90d16f7f235b14d'
+  homepage "http://www.zabbix.com/"
+  url "https://downloads.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/2.4.2/zabbix-2.4.2.tar.gz"
+  sha1 "627ed5196b81a1f4e36690695dfbcaa1803890e3"
 
-  option 'with-mysql', 'Use Zabbix Server with MySQL library instead PostgreSQL.'
-  option 'agent-only', 'Install only the Zabbix Agent without Server and Proxy.'
+  bottle do
+    sha1 "5e335b2e0fe5ccae9dbc375ca15a6c60b1560f1d" => :yosemite
+    sha1 "ff74e25cf747013e6f8f98685f51387758c85fd1" => :mavericks
+    sha1 "1bc4d521656fb5439330143352dcd7944dce88fb" => :mountain_lion
+  end
 
-  unless build.include? 'agent-only'
+  option "with-mysql", "Use Zabbix Server with MySQL library instead PostgreSQL."
+  option "agent-only", "Install only the Zabbix Agent without Server and Proxy."
+
+  unless build.include? "agent-only"
     depends_on :mysql => :optional
-    depends_on :postgresql if build.without? 'mysql'
-    depends_on 'fping'
-    depends_on 'libssh2'
+    depends_on :postgresql if build.without? "mysql"
+    depends_on "fping"
+    depends_on "libssh2"
   end
 
   def brewed_or_shipped(db_config)
@@ -25,9 +31,10 @@ class Zabbix < Formula
       --disable-dependency-tracking
       --prefix=#{prefix}
       --enable-agent
+      --with-iconv=#{MacOS.sdk_path}/usr
     }
 
-    unless build.include? 'agent-only'
+    unless build.include? "agent-only"
       args += %W{
         --enable-server
         --enable-proxy
@@ -36,7 +43,7 @@ class Zabbix < Formula
         --with-libcurl
         --with-ssh2
       }
-      if build.with? 'mysql'
+      if build.with? "mysql"
         args << "--with-mysql=#{brewed_or_shipped('mysql_config')}"
       else
         args << "--with-postgresql=#{brewed_or_shipped('pg_config')}"
@@ -46,9 +53,9 @@ class Zabbix < Formula
     system "./configure", *args
     system "make install"
 
-    unless build.include? 'agent-only'
-      db = build.with?('mysql') ? 'mysql' : 'postgresql'
-      (share/'zabbix').install 'frontends/php', "database/#{db}"
+    unless build.include? "agent-only"
+      db = build.with?("mysql") ? "mysql" : "postgresql"
+      (share/"zabbix").install "frontends/php", "database/#{db}"
     end
   end
 

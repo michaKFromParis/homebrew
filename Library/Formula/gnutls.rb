@@ -1,24 +1,26 @@
-require 'formula'
-
+# GnuTLS has previous, current, and next stable branches, we use current.
+# From 3.4.0 GnuTLS will be permanently disabling SSLv3. Every brew uses will need a revision with that.
+# http://nmav.gnutls.org/2014/10/what-about-poodle.html
 class Gnutls < Formula
-  homepage 'http://gnutls.org'
-  url 'ftp://ftp.gnutls.org/gcrypt/gnutls/v3.2/gnutls-3.2.13.tar.xz'
-  mirror 'http://mirrors.dotsrc.org/gcrypt/gnutls/v3.2/gnutls-3.2.13.tar.xz'
-  sha1 'c4a95902bb67df46e9b2c08d4c10523db94e2736'
+  homepage "http://gnutls.org"
+  url "ftp://ftp.gnutls.org/gcrypt/gnutls/v3.3/gnutls-3.3.11.tar.xz"
+  mirror "http://mirrors.dotsrc.org/gcrypt/gnutls/v3.3/gnutls-3.3.11.tar.xz"
+  sha256 "aef28d629b6ba824bd435f9b23506525e657e3746d4aa021296b13cbaaa6ae71"
 
   bottle do
     cellar :any
-    sha1 "d47f9d4adc2ed860c351edef7729e206b493012d" => :mavericks
-    sha1 "67dc1e554a4af1b004d1fdb3ae0dad7261cfbbe0" => :mountain_lion
-    sha1 "75ec84c8ae2f519327e2230f18e7508c33da9add" => :lion
+    sha1 "09178a60426edaa938111aa5dcf10f361a8669c5" => :yosemite
+    sha1 "7174f04eaba8478eb4df571fd618ae9dbd0ddaa8" => :mavericks
+    sha1 "d85219bb39f3d025e92d2124acd05f0865d369ae" => :mountain_lion
   end
 
-  depends_on 'pkg-config' => :build
-  depends_on 'libtasn1'
-  depends_on 'gmp'
-  depends_on 'nettle'
-  depends_on 'guile' => :optional
-  depends_on 'p11-kit' => :optional
+  depends_on "pkg-config" => :build
+  depends_on "libtasn1"
+  depends_on "gmp"
+  depends_on "nettle"
+  depends_on "guile" => :optional
+  depends_on "p11-kit" => :optional
+  depends_on "unbound" => :optional
 
   fails_with :llvm do
     build 2326
@@ -28,26 +30,32 @@ class Gnutls < Formula
   def install
     args = %W[
       --disable-dependency-tracking
+      --disable-silent-rules
       --disable-static
       --prefix=#{prefix}
       --sysconfdir=#{etc}
       --with-default-trust-store-file=#{etc}/openssl/cert.pem
+      --disable-heartbeat-support
     ]
 
-    if build.with? 'guile'
-      args << '--enable-guile'
-      args << '--with-guile-site-dir=no'
+    if build.with? "guile"
+      args << "--enable-guile"
+      args << "--with-guile-site-dir=no"
     end
 
     system "./configure", *args
-    system "make install"
+    system "make", "install"
 
     # certtool shadows the OS X certtool utility
-    mv bin+'certtool', bin+'gnutls-certtool'
-    mv man1+'certtool.1', man1+'gnutls-certtool.1'
+    mv bin+"certtool", bin+"gnutls-certtool"
+    mv man1+"certtool.1", man1+"gnutls-certtool.1"
   end
 
   def post_install
     Formula["openssl"].post_install
+  end
+
+  test do
+    system "#{bin}/gnutls-cli", "--version"
   end
 end

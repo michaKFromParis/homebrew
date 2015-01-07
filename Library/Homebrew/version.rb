@@ -11,7 +11,7 @@ class Version
     end
 
     def inspect
-      "#<#{self.class} #{value.inspect}>"
+      "#<#{self.class.name} #{value.inspect}>"
     end
 
     def to_s
@@ -36,7 +36,7 @@ class Version
     end
 
     def inspect
-      "#<#{self.class}>"
+      "#<#{self.class.name}>"
     end
   end
 
@@ -80,7 +80,7 @@ class Version
 
   class CompositeToken < StringToken
     def rev
-      value[/([0-9]+)/, 1] || "0"
+      value[/[0-9]+/].to_i
     end
   end
 
@@ -154,14 +154,6 @@ class Version
     NumericToken::PATTERN,
     StringToken::PATTERN
   )
-
-  def self.new_with_scheme(value, scheme)
-    if Class === scheme && scheme.ancestors.include?(Version)
-      scheme.new(value)
-    else
-      raise TypeError, "Unknown version scheme #{scheme.inspect}"
-    end
-  end
 
   def self.detect(url, specs={})
     if specs.has_key?(:tag)
@@ -309,7 +301,7 @@ class Version
     m = /_((?:\d+\.)+\d+[abc]?)[.]orig$/.match(stem)
     return m.captures.first unless m.nil?
 
-    # e.g. http://www.openssl.org/source/openssl-0.9.8s.tar.gz
+    # e.g. https://www.openssl.org/source/openssl-0.9.8s.tar.gz
     m = /-v?([^-]+)/.match(stem)
     return m.captures.first unless m.nil?
 

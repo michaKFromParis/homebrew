@@ -1,29 +1,42 @@
-require 'formula'
+require "formula"
 
 class Sassc < Formula
-  homepage 'https://github.com/hcatlin/sassc'
-  url 'https://github.com/hcatlin/sassc/archive/v1.0.1.tar.gz'
-  sha1 '69e7d97264b252593a3307330a96a5ccdc2813b5'
+  homepage "https://github.com/sass/sassc"
+  url "https://github.com/sass/sassc/archive/3.1.0.tar.gz"
+  sha1 "573224ad922b46ea1a568807ddcbc7de41a4254d"
+  head "https://github.com/sass/sassc.git"
 
-  depends_on :autoconf
-  depends_on :automake
-  depends_on :libtool
-  depends_on 'libsass'
+  bottle do
+    cellar :any
+    sha1 "744cd165da007750644e6eb3cfb1a7b76d94c7a2" => :yosemite
+    sha1 "d6d38f5d139073162943d1a5828c1b8b38e998be" => :mavericks
+    sha1 "26c429c4b643c8cf8602e2534f44473e18859ab5" => :mountain_lion
+  end
+
+  depends_on "autoconf" => :build
+  depends_on "automake" => :build
+  depends_on "libtool" => :build
+  depends_on "pkg-config" => :build
+  depends_on "libsass"
 
   def install
-    system "autoreconf -i"
-    system "./configure", "--prefix=#{prefix}"
-    system "make install"
+    ENV["SASSC_VERSION"] = "3.1.0"
+    system "autoreconf", "-fvi"
+    system "./configure", "--prefix=#{prefix}", "--disable-silent-rules",
+                          "--disable-dependency-tracking"
+    system "make", "install"
   end
 
   test do
-    (testpath/"test.sass").write "a { color:blue; &:hover { color:red; } }"
-    expected = <<-EOS.undent
-      a {
-        color: blue; }
-        a:hover {
-          color: red; }
+    (testpath/"input.scss").write <<-EOS.undent
+      div {
+        img {
+          border: 0px;
+        }
+      }
     EOS
-    assert_equal expected, `#{bin}/sassc test.sass`
+
+   assert_equal "div img{border:0px}",
+   shell_output("#{bin}/sassc --style compressed input.scss").strip
   end
 end

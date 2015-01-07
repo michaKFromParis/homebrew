@@ -1,22 +1,19 @@
-require 'formula'
-
 class Pyenv < Formula
-  homepage 'https://github.com/yyuu/pyenv'
-  url 'https://github.com/yyuu/pyenv/archive/v0.4.0-20140404.tar.gz'
-  sha1 '7b9e2cd26ac195d9849b1311a94fbdd0c97c2dc2'
+  homepage "https://github.com/yyuu/pyenv"
+  head "https://github.com/yyuu/pyenv.git"
+  url "https://github.com/yyuu/pyenv/archive/v20141211.tar.gz"
+  sha1 "b7c20679aafeed8ebe2b346013cfe80fd813dc45"
 
-  head 'https://github.com/yyuu/pyenv.git'
-
-  depends_on 'autoconf' => [:recommended, :run]
-  depends_on 'pkg-config' => [:recommended, :run]
+  depends_on "autoconf" => [:recommended, :run]
+  depends_on "pkg-config" => [:recommended, :run]
 
   def install
-    inreplace 'libexec/pyenv', '/usr/local', HOMEBREW_PREFIX
-    prefix.install "LICENSE", "README.md", "bin", "completions", "libexec"
+    inreplace "libexec/pyenv", "/usr/local", HOMEBREW_PREFIX
+    prefix.install "bin", "completions", "libexec"
     prefix.install "plugins" => "default-plugins"
 
     var_lib = "#{HOMEBREW_PREFIX}/var/lib/pyenv"
-    ['plugins', 'versions'].each do |dir|
+    %w[plugins versions].each do |dir|
       var_dir = "#{var_lib}/#{dir}"
       mkdir_p var_dir
       ln_sf var_dir, "#{prefix}/#{dir}"
@@ -24,7 +21,7 @@ class Pyenv < Formula
 
     rm_f "#{var_lib}/plugins/python-build"
     ln_sf "#{prefix}/default-plugins/python-build", "#{var_lib}/plugins/python-build"
-    ["pyenv-install", "pyenv-uninstall", "python-build"].each do |cmd|
+    %w[pyenv-install pyenv-uninstall python-build].each do |cmd|
       bin.install_symlink "#{prefix}/default-plugins/python-build/bin/#{cmd}"
     end
   end
@@ -36,5 +33,9 @@ class Pyenv < Formula
     To use Homebrew's directories rather than ~/.pyenv add to your profile:
       export PYENV_ROOT=#{opt_prefix}
     EOS
+  end
+
+  test do
+    shell_output("eval \"$(#{bin}/pyenv init -)\" && pyenv versions")
   end
 end

@@ -2,13 +2,14 @@ require 'formula'
 
 class Gdal < Formula
   homepage 'http://www.gdal.org/'
-  url 'http://download.osgeo.org/gdal/1.11.0/gdal-1.11.0.tar.gz'
-  sha1 '25efd2bffdea2e841377ca8c1fd49d89d02ac87e'
+  url "http://download.osgeo.org/gdal/1.11.1/gdal-1.11.1.tar.gz"
+  sha1 "e2c67481932ec9fb6ec3c0faadc004f715c4eef4"
+  revision 3
 
   bottle do
-    sha1 "e6f7fd48a09a28796d3f721d0c208dd15a1310bb" => :mavericks
-    sha1 "2e9f478b59008df1b96461a55a031522ab0ba7ad" => :mountain_lion
-    sha1 "319300ab6951e4b25feb8475e28ac66deb16811a" => :lion
+    sha1 "672ef7894b473fbe7650bd442c06e8e61a2415f0" => :yosemite
+    sha1 "ccfd06fd15e86bbc24e5475e2be27a2bdb487986" => :mavericks
+    sha1 "fd2b45f6412a9459bcda143baa57cda6c63aad61" => :mountain_lion
   end
 
   head do
@@ -59,6 +60,7 @@ class Gdal < Formula
     depends_on "cfitsio"
     depends_on "epsilon"
     depends_on "libdap"
+    depends_on "libxml2"
 
     # Vector libraries
     depends_on "unixodbc" # OS X version is not complete enough
@@ -70,12 +72,23 @@ class Gdal < Formula
     depends_on "json-c"
   end
 
+  stable do
+    # REMOVE when 1.11.2 is released
+    # Fix segfault when executing OGR2SQLITE_Register() when compiled against sqlite 3.8.7
+    # See: http://trac.osgeo.org/gdal/ticket/5725, https://github.com/OSGeo/gdal/commit/12d3b98
+    # Fixes issue with QGIS's Save as... for vector layers: http://hub.qgis.org/issues/11526
+    patch :p2 do
+      url "https://github.com/OSGeo/gdal/commit/12d3b984a052c59ee336f952902b82ace01ba31c.diff"
+      sha1 "844bb827327f9c64918499f3cce3ded9414952c4"
+    end
+  end
+
   # Extra linking libraries in configure test of armadillo may throw warning
   # see: https://trac.osgeo.org/gdal/ticket/5455
   # including prefix lib dir added by Homebrew:
   #    ld: warning: directory not found for option '-L/usr/local/Cellar/gdal/1.11.0/lib'
   patch do
-    url "https://gist.githubusercontent.com/dakcarto/7abad108aa31a1e53fb4/raw/gdal-armadillo.patch"
+    url "https://gist.githubusercontent.com/dakcarto/7abad108aa31a1e53fb4/raw/b56887208fd91d0434d5a901dae3806fb1bd32f8/gdal-armadillo.patch"
     sha1 "3af1cae94a977d55541adba0d86c697d77bd1320"
   end if build.include? "enable-armadillo"
 
@@ -257,14 +270,15 @@ class Gdal < Formula
     sqlite = Formula["sqlite"]
     ENV.append 'LDFLAGS', "-L#{sqlite.opt_lib} -lsqlite3"
     ENV.append 'CFLAGS', "-I#{sqlite.opt_include}"
-    # Needed by libdap
-    ENV.libxml2 if build.include? 'complete'
 
     # Reset ARCHFLAGS to match how we build.
     ENV['ARCHFLAGS'] = "-arch #{MacOS.preferred_arch}"
 
     # Fix hardcoded mandir: http://trac.osgeo.org/gdal/ticket/5092
     inreplace 'configure', %r[^mandir='\$\{prefix\}/man'$], ''
+
+    # These libs are statically linked in vendored libkml and libkml formula
+    inreplace "configure", " -lminizip -luriparser", "" if build.with? "libkml"
 
     system "./configure", *get_configure_args
     system "make"
@@ -286,7 +300,7 @@ class Gdal < Formula
     system 'make', 'man' if build.head?
     system 'make', 'install-man'
     # Clean up any stray doxygen files.
-    Dir[bin + '*.dox'].each { |p| rm p }
+    Dir.glob("#{bin}/*.dox") { |p| rm p }
   end
 
   def caveats

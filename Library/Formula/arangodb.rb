@@ -2,28 +2,35 @@ require 'formula'
 
 class Arangodb < Formula
   homepage 'http://www.arangodb.org/'
-  url 'https://www.arangodb.org/repositories/Source/ArangoDB-2.0.6.tar.gz'
-  sha1 '9d966ff924a4bca2d1ef17d33fe917c7c4315729'
+  url 'https://www.arangodb.com/repositories/Source/ArangoDB-2.3.4.tar.gz'
+  sha1 '380fd0edaaabf4762f869fa9e2768427b88c89b8'
 
   head "https://github.com/triAGENS/ArangoDB.git", :branch => 'unstable'
 
   bottle do
-    sha1 "c17ee9db866e1f5e538079059b95e9a3c95582e4" => :mavericks
-    sha1 "ad19bbc961bb2f60c6842d52438d4315ab575611" => :mountain_lion
-    sha1 "42504ab4c99d33deb0940fe87ef47b34fbfd50e3" => :lion
+    sha1 "60d6b4a42c30f8714942c46b0a6ed8f11ebd5391" => :yosemite
+    sha1 "adeaa145e9c5a7eb1991731f1120f1709b4fe425" => :mavericks
+    sha1 "891f8e977e7a5afd17db85c9667ab975d3ec2769" => :mountain_lion
   end
 
   depends_on 'go' => :build
+  depends_on 'openssl'
 
-  def suffix
-    if build.stable?
-      return ""
-    else
-      return "-" + (build.devel? ? version : "unstable")
-    end
-  end
+  needs :cxx11
 
   def install
+    # clang on 10.8 will still try to build against libstdc++,
+    # which fails because it doesn't have the C++0x features
+    # arangodb requires.
+    ENV.libcxx
+
+    # Bundled V8 tries to build with a 10.5 deployment target,
+    # which causes clang to error out b/c a 10.5 deployment target
+    # and -stdlib=libc++ are not valid together.
+    inreplace "3rdParty/V8/build/standalone.gypi",
+      "'mac_deployment_target%': '10.5',",
+      "'mac_deployment_target%': '#{MacOS.version}',"
+
     args = %W[
       --disable-dependency-tracking
       --prefix=#{prefix}
@@ -34,14 +41,19 @@ class Arangodb < Formula
       --enable-mruby
       --datadir=#{share}
       --localstatedir=#{var}
-      --program-suffix=#{suffix}
     ]
+
+    args << "--program-suffix=unstable" if build.head?
 
     system "./configure", *args
     system "make install"
 
     (var/'arangodb').mkpath
     (var/'log/arangodb').mkpath
+  end
+
+  def post_install
+    system "#{sbin}/arangod", "--upgrade", "--log.file", "-"
   end
 
   plist_options :manual => "#{HOMEBREW_PREFIX}/opt/arangodb/sbin/arangod --log.file -"

@@ -2,22 +2,15 @@ require 'formula'
 
 class Go < Formula
   homepage 'http://golang.org'
-  head 'https://go.googlecode.com/hg/'
-  url 'https://go.googlecode.com/files/go1.2.1.src.tar.gz'
-  version '1.2.1'
-  sha1 '6a4b9991eddd8039438438d6aa25126ab7e07f2f'
+  head 'https://go.googlesource.com/go', :using => :git
+  url 'https://storage.googleapis.com/golang/go1.4.src.tar.gz'
+  version '1.4'
+  sha1 '6a7d9bd90550ae1e164d7803b3e945dc8309252b'
 
   bottle do
-    revision 1
-    sha1 "c9d4efb3c0597bcea12a5556c85199bc468cdffb" => :mavericks
-    sha1 "bff65b108ec15cb11c7a41afd2f57ce6a6f6029e" => :mountain_lion
-    sha1 "1c09d8aaac7d78b54405c39e5ede0ee9d927860f" => :lion
-  end
-
-  devel do
-    url 'https://storage.googleapis.com/golang/go1.3beta1.src.tar.gz'
-    version '1.3beta1'
-    sha1 'e4df4e99115aba2f1ae5ccd56e682669d00c2a9d'
+    sha1 "33aa691a93a3c9aa40334e3ce6daa49420696fe4" => :yosemite
+    sha1 "9fa24700a5187fd8272178bd731fb3f9aa485188" => :mavericks
+    sha1 "359fe25e6755c2362d619c01363a7f80ec59efca" => :mountain_lion
   end
 
   option 'cross-compile-all', "Build the cross-compilers and runtime support for all supported platforms"
@@ -25,18 +18,17 @@ class Go < Formula
   option 'without-cgo', "Build without cgo"
 
   def install
-    # install the completion scripts
-    bash_completion.install 'misc/bash/go' => 'go-completion.bash'
-    zsh_completion.install 'misc/zsh/go' => 'go'
-
     # host platform (darwin) must come last in the targets list
     if build.include? 'cross-compile-all'
       targets = [
         ['linux',   ['386', 'amd64', 'arm']],
-        ['freebsd', ['386', 'amd64']],
-        ['netbsd',  ['386', 'amd64']],
+        ['freebsd', ['386', 'amd64', 'arm']],
+        ['netbsd',  ['386', 'amd64', 'arm']],
         ['openbsd', ['386', 'amd64']],
         ['windows', ['386', 'amd64']],
+        ['dragonfly', ['386', 'amd64']],
+        ['plan9',   ['386', 'amd64']],
+        ['solaris', ['amd64']],
         ['darwin',  ['386', 'amd64']],
       ]
     elsif build.include? 'cross-compile-common'
@@ -80,8 +72,8 @@ class Go < Formula
       http://golang.org/doc/go1.2#go_tools_godoc
 
     To get `go vet` and `go doc` run:
-      go get code.google.com/p/go.tools/cmd/godoc
-      go get code.google.com/p/go.tools/cmd/vet
+      go get golang.org/x/tools/cmd/vet
+      go get golang.org/x/tools/cmd/godoc
 
     You may wish to add the GOROOT-based install location to your PATH:
       export PATH=$PATH:#{opt_libexec}/bin

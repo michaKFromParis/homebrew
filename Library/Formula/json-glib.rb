@@ -2,14 +2,14 @@ require "formula"
 
 class JsonGlib < Formula
   homepage "http://live.gnome.org/JsonGlib"
-  url "http://ftp.gnome.org/pub/gnome/sources/json-glib/1.0/json-glib-1.0.0.tar.xz"
-  sha256 "dbf558d2da989ab84a27e4e13daa51ceaa97eb959c2c2f80976c9322a8f4cdde"
+  url "http://ftp.gnome.org/pub/gnome/sources/json-glib/1.0/json-glib-1.0.2.tar.xz"
+  sha256 "887bd192da8f5edc53b490ec51bf3ffebd958a671f5963e4f3af32c22e35660a"
 
   bottle do
-    revision 1
-    sha1 "6e4d60ee9e486a5970ad184dd0740b562766a236" => :mavericks
-    sha1 "ebca4951df7a6824e7f78fcbaba3b768f9b73a84" => :mountain_lion
-    sha1 "26b6320e22759d47ac2b8d145fa045c5da66601b" => :lion
+    revision 2
+    sha1 "58daae021ca6c990a0e29e5b7c72699ca4e4800a" => :yosemite
+    sha1 "18168428af31175e10e4c9f52809c58c6afebc22" => :mavericks
+    sha1 "64de84e6abc6bcc2700e45d6288646d14bf5fc05" => :mountain_lion
   end
 
   depends_on "pkg-config" => :build

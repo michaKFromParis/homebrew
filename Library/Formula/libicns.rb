@@ -6,6 +6,14 @@ class Libicns < Formula
   sha256 '335f10782fc79855cf02beac4926c4bf9f800a742445afbbf7729dab384555c2'
   revision 1
 
+  bottle do
+    cellar :any
+    revision 1
+    sha1 "8be08eb118ca3412bc4dc770e86c4086d3052a6c" => :yosemite
+    sha1 "4eba2a27ee02d7747ffe339eccb086069bbfdc7e" => :mavericks
+    sha1 "94076c2e477fbe0b38100aea7e5c6a6760678416" => :mountain_lion
+  end
+
   option :universal
 
   depends_on 'jasper'

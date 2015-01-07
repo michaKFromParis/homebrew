@@ -1,8 +1,6 @@
-require 'formula'
-
 class NoExpatFramework < Requirement
   def expat_framework
-    '/Library/Frameworks/expat.framework'
+    "/Library/Frameworks/expat.framework"
   end
 
   satisfy :build_env => false do
@@ -21,39 +19,88 @@ class NoExpatFramework < Requirement
 end
 
 class Cmake < Formula
-  homepage 'http://www.cmake.org/'
-  url 'http://www.cmake.org/files/v2.8/cmake-2.8.12.2.tar.gz'
-  sha1 'cca70b307aa32a6a32c72e01fdfcecc84c1c2690'
-
-  head 'http://cmake.org/cmake.git'
+  homepage "http://www.cmake.org/"
+  url "http://www.cmake.org/files/v3.1/cmake-3.1.0.tar.gz"
+  sha1 "cc20c40f5480c83a0204f516a490b470bd3a963a"
+  head "http://cmake.org/cmake.git"
 
   bottle do
     cellar :any
-    revision 2
-    sha1 "e1e50cfd9f421b64365a7a2c34e9e6337f9391b7" => :mavericks
-    sha1 "9c60ed323f8752eb257d1505e33d70e4367e4219" => :mountain_lion
-    sha1 "1914f68373cdc8d1c99b4d76e1e1fed85e4303d3" => :lion
+    sha1 "7a015c43f30830ffc722dbd548b014d725b1cc64" => :yosemite
+    sha1 "73716b458ef13282f84a870c9faf0cea52b0c508" => :mavericks
+    sha1 "d19131db9de47fa03ad08edce1c1c1b6eb6c3aa0" => :mountain_lion
+  end
+
+  option "without-docs", "Don't build man pages"
+  depends_on :python => :build if MacOS.version <= :snow_leopard && build.with?("docs")
+  depends_on "xz" # For LZMA
+
+  # The `with-qt` GUI option was removed due to circular dependencies if
+  # CMake is built with Qt support and Qt is built with MySQL support as MySQL uses CMake.
+  # For the GUI application please instead use brew install caskroom/cask/cmake.
+
+  resource "sphinx" do
+    url "https://pypi.python.org/packages/source/S/Sphinx/Sphinx-1.2.3.tar.gz"
+    sha1 "3a11f130c63b057532ca37fe49c8967d0cbae1d5"
+  end
+
+  resource "docutils" do
+    url "https://pypi.python.org/packages/source/d/docutils/docutils-0.12.tar.gz"
+    sha1 "002450621b33c5690060345b0aac25bc2426d675"
+  end
+
+  resource "pygments" do
+    url "https://pypi.python.org/packages/source/P/Pygments/Pygments-2.0.1.tar.gz"
+    sha1 "b9e9236693ccf6e86414e8578bf8874181f409de"
+  end
+
+  resource "jinja2" do
+    url "https://pypi.python.org/packages/source/J/Jinja2/Jinja2-2.7.3.tar.gz"
+    sha1 "25ab3881f0c1adfcf79053b58de829c5ae65d3ac"
+  end
+
+  resource "markupsafe" do
+    url "https://pypi.python.org/packages/source/M/MarkupSafe/MarkupSafe-0.23.tar.gz"
+    sha1 "cd5c22acf6dd69046d6cb6a3920d84ea66bdf62a"
   end
 
   depends_on NoExpatFramework
 
   def install
+    if build.with? "docs"
+      ENV.prepend_create_path "PYTHONPATH", buildpath+"sphinx/lib/python2.7/site-packages"
+      resources.each do |r|
+        r.stage do
+          system "python", *Language::Python.setup_install_args(buildpath/"sphinx")
+        end
+      end
+
+      # There is an existing issue around OS X & Python locale setting
+      # See http://bugs.python.org/issue18378#msg215215 for explanation
+      ENV["LC_ALL"] = "en_US.UTF-8"
+    end
+
     args = %W[
       --prefix=#{prefix}
       --system-libs
+      --parallel=#{ENV.make_jobs}
       --no-system-libarchive
       --datadir=/share/cmake
       --docdir=/share/doc/cmake
       --mandir=/share/man
     ]
 
+    if build.with? "docs"
+      args << "--sphinx-man" << "--sphinx-build=#{buildpath}/sphinx/bin/sphinx-build"
+    end
+
     system "./bootstrap", *args
     system "make"
-    system "make install"
+    system "make", "install"
   end
 
   test do
-    (testpath/'CMakeLists.txt').write('find_package(Ruby)')
-    system "#{bin}/cmake", '.'
+    (testpath/"CMakeLists.txt").write("find_package(Ruby)")
+    system "#{bin}/cmake", "."
   end
 end

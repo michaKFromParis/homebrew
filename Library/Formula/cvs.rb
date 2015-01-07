@@ -10,6 +10,14 @@ class Cvs < Formula
   url 'http://ftp.gnu.org/non-gnu/cvs/source/feature/1.12.13/cvs-1.12.13.tar.bz2'
   sha1 '93a8dacc6ff0e723a130835713235863f1f5ada9'
 
+  bottle do
+    cellar :any
+    revision 1
+    sha1 "054097e7fccf4a8ba60b9d1c364c411a6cd5de3c" => :yosemite
+    sha1 "8e84ffd198414118da1ffb18f9d18a885e68d60f" => :mavericks
+    sha1 "dea18dfba299690f2d8ed5dfc2205323207bc856" => :mountain_lion
+  end
+
   keg_only :provided_until_xcode5
 
   {

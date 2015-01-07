@@ -11,6 +11,9 @@ class Zbar < Formula
   depends_on 'jpeg'
   depends_on 'imagemagick'
   depends_on 'ufraw'
+  depends_on 'xz'
+  depends_on 'freetype'
+  depends_on 'libtool' => :run
 
   # Fix JPEG handling using patch from
   # http://sourceforge.net/p/zbar/discussion/664596/thread/58b8d79b#8f67

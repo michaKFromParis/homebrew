@@ -1,25 +1,48 @@
-require 'formula'
-
 class Swig < Formula
-  homepage 'http://www.swig.org/'
-  url 'https://downloads.sourceforge.net/project/swig/swig/swig-3.0.0/swig-3.0.0.tar.gz'
-  sha1 '10a1cc5ba6abbc7282b8146ccc0d8eefe233bfab'
+  homepage "http://www.swig.org/"
+  url "https://downloads.sourceforge.net/project/swig/swig/swig-3.0.2/swig-3.0.2.tar.gz"
+  sha1 "e695a14acf39b25f3ea2d7303e23e39dfe284e31"
 
   bottle do
-    sha1 "24b5a7ea2ceb3671b471f637acf9c4e200786daf" => :mavericks
-    sha1 "cf97971c41a373794b486f90eb635fec9d211781" => :mountain_lion
-    sha1 "a2cc53440ae191f9020019c851a83c2929fb249f" => :lion
+    revision 1
+    sha1 "b8576d0116c858d46655ed5bf19cc31509813f1b" => :yosemite
+    sha1 "a3c2bd9d87e17cfd72197dd798e0b29fd5b25565" => :mavericks
+    sha1 "2ad69b9ef6edb06930914fcb2865a9b09a63366b" => :mountain_lion
   end
 
   option :universal
 
-  depends_on 'pcre'
+  depends_on "pcre"
 
   def install
     ENV.universal_binary if build.universal?
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}"
     system "make"
-    system "make install"
+    system "make", "install"
+  end
+
+  test do
+    (testpath/"test.c").write <<-EOS.undent
+      int add(int x, int y)
+      {
+        return x + y;
+      }
+    EOS
+    (testpath/"test.i").write <<-EOS.undent
+      %module test
+      %inline %{
+      extern int add(int x, int y);
+      %}
+    EOS
+    (testpath/"run.rb").write <<-EOS.undent
+      require "./test"
+      puts Test.add(1, 1)
+    EOS
+    system "#{bin}/swig", "-ruby", "test.i"
+    system ENV.cc, "-c", "test.c"
+    system ENV.cc, "-c", "test_wrap.c", "-I/System/Library/Frameworks/Ruby.framework/Headers/"
+    system ENV.cc, "-bundle", "-flat_namespace", "-undefined", "suppress", "test.o", "test_wrap.o", "-o", "test.bundle"
+    assert_equal "2", shell_output("ruby run.rb").strip
   end
 end

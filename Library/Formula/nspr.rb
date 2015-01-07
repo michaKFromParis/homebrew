@@ -2,14 +2,14 @@ require 'formula'
 
 class Nspr < Formula
   homepage "https://developer.mozilla.org/docs/Mozilla/Projects/NSPR"
-  url "https://ftp.mozilla.org/pub/mozilla.org/nspr/releases/v4.10.4/src/nspr-4.10.4.tar.gz"
-  sha1 "43b2029d990515f952c89d2921397c064fbbe2e7"
+  url "https://ftp.mozilla.org/pub/mozilla.org/nspr/releases/v4.10.7/src/nspr-4.10.7.tar.gz"
+  sha256 "389af5cfa863ea9bc6de7b30c15f8a4f9bddd8002f8c6fdc8b33caef43893938"
 
   bottle do
     cellar :any
-    sha1 "329f42e5f9b3110234770423792c0c87e18c4d53" => :mavericks
-    sha1 "44a02dcd84912019fdc68398c4e23c1c303dac8b" => :mountain_lion
-    sha1 "33050ee6f28f92be7d7c63a385827db3e0ae8712" => :lion
+    sha1 "0b5ae7b07ce671c57c590eb37807fb8391537284" => :yosemite
+    sha1 "ac2f2904dd4c6e47fde68f3ac7c38a4745ec0702" => :mavericks
+    sha1 "1180562bef675d27bf8b6d33da4e045927819538" => :mountain_lion
   end
 
   def install

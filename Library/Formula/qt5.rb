@@ -1,71 +1,80 @@
-require 'formula'
+require "formula"
 
 class Qt5HeadDownloadStrategy < GitDownloadStrategy
-  include FileUtils
-
   def stage
-    @clone.cd { reset }
-    safe_system 'git', 'clone', @clone, '.'
-    ln_s @clone, 'qt'
-    safe_system './init-repository', '--mirror', "#{Dir.pwd}/"
-    rm 'qt'
+    cached_location.cd { reset }
+    quiet_safe_system "git", "clone", cached_location, "."
+    ln_s cached_location, "qt"
+    quiet_safe_system "./init-repository", { :quiet_flag => "-q" }, "--mirror", "#{Dir.pwd}/"
+    rm "qt"
+  end
+end
+
+class OracleHomeVar < Requirement
+  fatal true
+  satisfy ENV["ORACLE_HOME"]
+
+  def message; <<-EOS.undent
+      To use --with-oci you have to set the ORACLE_HOME environment variable.
+      Check Oracle Instant Client documentation for more information.
+    EOS
   end
 end
 
 class Qt5 < Formula
-  homepage 'http://qt-project.org/'
-  url 'http://download.qt-project.org/official_releases/qt/5.2/5.2.1/single/qt-everywhere-opensource-src-5.2.1.tar.gz'
-  sha1 '31a5cf175bb94dbde3b52780d3be802cbeb19d65'
+  homepage "http://qt-project.org/"
+  url "http://qtmirror.ics.com/pub/qtproject/official_releases/qt/5.4/5.4.0/single/qt-everywhere-opensource-src-5.4.0.tar.xz"
+  mirror "http://download.qt-project.org/official_releases/qt/5.4/5.4.0/single/qt-everywhere-opensource-src-5.4.0.tar.xz"
+  sha1 "2f5558b87f8cea37c377018d9e7a7047cc800938"
 
   bottle do
-    revision 2
-    sha1 "6a514fbf56491a64316ef05acdf07ca6526ba458" => :mavericks
-    sha1 "2518707b0ad69462a620fcd5c2e482053a239914" => :mountain_lion
-    sha1 "b2362eb20666b961d1d2acec629e4a581aa2b87a" => :lion
+    sha1 "072ed2c806664fd1da3ba7c90c8e4887509fb91b" => :yosemite
+    sha1 "1ca730d96a962a5c4fcbd605542b7bfb528d6c58" => :mavericks
+    sha1 "a6bbd39629a69c35c8a5d5e8ede4b6c752e3aecf" => :mountain_lion
   end
 
-  head 'git://gitorious.org/qt/qt5.git', :branch => 'stable',
+  head "https://gitorious.org/qt/qt5.git", :branch => "5.4",
     :using => Qt5HeadDownloadStrategy, :shallow => false
 
   keg_only "Qt 5 conflicts Qt 4 (which is currently much more widely used)."
 
   option :universal
-  option 'with-docs', 'Build documentation'
-  option 'developer', 'Build and link with developer options'
+  option "with-docs", "Build documentation"
+  option "with-examples", "Build examples"
+  option "developer", "Build and link with developer options"
+  option "with-oci", "Build with Oracle OCI plugin"
 
+  # Snow Leopard is untested and support has been removed in 5.4
+  # https://qt.gitorious.org/qt/qtbase/commit/5be81925d7be19dd0f1022c3cfaa9c88624b1f08
+  depends_on :macos => :lion
   depends_on "pkg-config" => :build
   depends_on "d-bus" => :optional
-  depends_on "mysql" => :optional
+  depends_on :mysql => :optional
+  depends_on :xcode => :build
 
-  odie 'qt5: --with-qtdbus has been renamed to --with-d-bus' if build.with? "qtdbus"
-  odie 'qt5: --with-demos-examples is no longer supported' if build.with? "demos-examples"
-  odie 'qt5: --with-debug-and-release is no longer supported' if build.with? "debug-and-release"
+  # There needs to be an OpenSSL dep here ideally, but qt keeps ignoring it.
+  # Keep nagging upstream for a fix to this problem, and revision when possible.
+  # https://github.com/Homebrew/homebrew/pull/34929
+  # https://bugreports.qt-project.org/browse/QTBUG-42161
+
+  depends_on OracleHomeVar if build.with? "oci"
+
+  deprecated_option "qtdbus" => "with-d-bus"
 
   def install
-    # fixed hardcoded link to plugin dir: https://bugreports.qt-project.org/browse/QTBUG-29188
-    inreplace "qttools/src/macdeployqt/macdeployqt/main.cpp", "deploymentInfo.pluginPath = \"/Developer/Applications/Qt/plugins\";",
-              "deploymentInfo.pluginPath = \"#{prefix}/plugins\";"
-
     ENV.universal_binary if build.universal?
+
     args = ["-prefix", prefix,
             "-system-zlib",
             "-qt-libpng", "-qt-libjpeg",
             "-confirm-license", "-opensource",
-            "-nomake", "examples",
-            "-nomake", "tests",
-            "-release"]
+            "-nomake", "tests", "-release"]
 
-    unless MacOS::CLT.installed?
-      # ... too stupid to find CFNumber.h, so we give a hint:
-      ENV.append 'CXXFLAGS', "-I#{MacOS.sdk_path}/System/Library/Frameworks/CoreFoundation.framework/Headers"
-    end
+    args << "-nomake" << "examples" if build.without? "examples"
 
-    # https://bugreports.qt-project.org/browse/QTBUG-34382
-    args << "-no-xcb"
+    args << "-plugin-sql-mysql" if build.with? "mysql"
 
-    args << "-plugin-sql-mysql" if build.with? 'mysql'
-
-    if build.with? 'd-bus'
+    if build.with? "d-bus"
       dbus_opt = Formula["d-bus"].opt_prefix
       args << "-I#{dbus_opt}/lib/dbus-1.0/include"
       args << "-I#{dbus_opt}/include/dbus-1.0"
@@ -75,20 +84,26 @@ class Qt5 < Formula
     end
 
     if MacOS.prefer_64_bit? or build.universal?
-      args << '-arch' << 'x86_64'
+      args << "-arch" << "x86_64"
     end
 
     if !MacOS.prefer_64_bit? or build.universal?
-      args << '-arch' << 'x86'
+      args << "-arch" << "x86"
     end
 
-    args << '-developer-build' if build.include? 'developer'
+    if build.with? "oci"
+      args << "-I#{ENV['ORACLE_HOME']}/sdk/include"
+      args << "-L{ENV['ORACLE_HOME']}"
+      args << "-plugin-sql-oci"
+    end
+
+    args << "-developer-build" if build.include? "developer"
 
     system "./configure", *args
     system "make"
     ENV.j1
     system "make install"
-    if build.with? 'docs'
+    if build.with? "docs"
       system "make", "docs"
       system "make", "install_docs"
     end
@@ -103,7 +118,7 @@ class Qt5 < Formula
       include.install_symlink path => path.parent.basename(".framework")
     end
 
-    # configure saved the PKG_CONFIG_LIBDIR set up by superenv; remove it
+    # configure saved PKG_CONFIG_LIBDIR set up by superenv; remove it
     # see: https://github.com/Homebrew/homebrew/issues/27184
     inreplace prefix/"mkspecs/qconfig.pri", /\n\n# pkgconfig/, ""
     inreplace prefix/"mkspecs/qconfig.pri", /\nPKG_CONFIG_.*=.*$/, ""

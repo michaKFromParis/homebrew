@@ -1,21 +1,28 @@
-require 'formula'
+require "formula"
 
 class DnscryptProxy < Formula
-  homepage 'http://dnscrypt.org'
-  url 'http://download.dnscrypt.org/dnscrypt-proxy/dnscrypt-proxy-1.3.3.tar.bz2'
-  sha256 'd9aca5253b9fe0fd0bb756201e837d3b723c091e5be0eb3a81cf5432cedaec47'
+  homepage "http://dnscrypt.org"
+  url "https://github.com/jedisct1/dnscrypt-proxy/releases/download/1.4.2/dnscrypt-proxy-1.4.2.tar.bz2"
+  mirror "http://download.dnscrypt.org/dnscrypt-proxy/dnscrypt-proxy-1.4.2.tar.bz2"
+  sha256 "766bcd8874cd6cbfeeeb7246c75c39ddc14317ad81ad713bd6cfc9529b2f0c0d"
+
+  bottle do
+    sha1 "2a09152f68e40dd76d2415cb7afebf0480881578" => :yosemite
+    sha1 "80fa7111d860b34bb312381886e2b73128db906e" => :mavericks
+    sha1 "401db4fb2a2dcee39edcbeb8b04e30ef669a8b4a" => :mountain_lion
+  end
 
   head do
-    url 'https://github.com/opendns/dnscrypt-proxy.git', :branch => 'master'
+    url "https://github.com/jedisct1/dnscrypt-proxy.git"
 
-    depends_on :autoconf
-    depends_on :automake
-    depends_on :libtool
+    depends_on "autoconf" => :build
+    depends_on "automake" => :build
+    depends_on "libtool" => :build
   end
 
   option "plugins", "Support plugins and install example plugins."
 
-  depends_on 'libsodium'
+  depends_on "libsodium"
 
   def install
     system "autoreconf", "-if" if build.head?
@@ -27,7 +34,7 @@ class DnscryptProxy < Formula
       args << "--enable-plugins-root"
     end
     system "./configure", *args
-    system "make install"
+    system "make", "install"
   end
 
   def caveats; <<-EOS.undent
@@ -75,6 +82,7 @@ class DnscryptProxy < Formula
         <array>
           <string>#{opt_sbin}/dnscrypt-proxy</string>
           <string>--user=nobody</string>
+          <string>--resolver-name=opendns</string>
         </array>
         <key>UserName</key>
         <string>root</string>

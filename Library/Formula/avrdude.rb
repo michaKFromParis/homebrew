@@ -3,6 +3,7 @@ require 'formula'
 class Avrdude < Formula
   homepage 'http://savannah.nongnu.org/projects/avrdude/'
   url 'http://download.savannah.gnu.org/releases/avrdude/avrdude-6.1.tar.gz'
+  mirror 'http://download-mirror.savannah.gnu.org/releases/avrdude/avrdude-6.1.tar.gz'
   sha1 '15525cbff5918568ef3955d871dbb94feaf83c79'
 
   bottle do
@@ -14,9 +15,9 @@ class Avrdude < Formula
   head do
     url 'svn://svn.savannah.nongnu.org/avrdude/trunk/avrdude/'
 
-    depends_on :autoconf
-    depends_on :automake
-    depends_on :libtool
+    depends_on "autoconf" => :build
+    depends_on "automake" => :build
+    depends_on "libtool" => :build
   end
 
   depends_on :macos => :snow_leopard # needs GCD/libdispatch
@@ -26,7 +27,10 @@ class Avrdude < Formula
   depends_on 'libhid' => :optional
 
   def install
-    system "./bootstrap" if build.head?
+    if build.head?
+      inreplace "bootstrap", /libtoolize/, "glibtoolize"
+      system "./bootstrap"
+    end
     system "./configure", "--disable-dependency-tracking",
                           "--prefix=#{prefix}"
     system "make"

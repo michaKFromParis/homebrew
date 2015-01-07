@@ -1,21 +1,19 @@
-require 'formula'
-
 class Redis < Formula
-  homepage 'http://redis.io/'
-  url "http://download.redis.io/releases/redis-2.8.9.tar.gz"
-  sha1 "003ccdc175816e0a751919cf508f1318e54aac1e"
+  homepage "http://redis.io/"
+  url "http://download.redis.io/releases/redis-2.8.19.tar.gz"
+  sha1 "3e362f4770ac2fdbdce58a5aa951c1967e0facc8"
 
   bottle do
-    sha1 "92ad2c1ffa9d54af09439e4ed99123a0f52fab32" => :mavericks
-    sha1 "8e7dc81f46bb55d0706d539d6b9ea132ff448024" => :mountain_lion
-    sha1 "514e7a7efe25016899f56053338e2100ffea2dce" => :lion
+    sha1 "ba238ce5e71f5c0c3cb997ebda0cf594f75e8069" => :yosemite
+    sha1 "0902233ed41683e22a1ecd8010f2875c9b0b9dba" => :mavericks
+    sha1 "4b8100b40edd0e6ef695e28bf4fd30360939c3f3" => :mountain_lion
   end
 
-  head 'https://github.com/antirez/redis.git', :branch => 'unstable'
+  head "https://github.com/antirez/redis.git", :branch => "unstable"
 
   fails_with :llvm do
     build 2334
-    cause 'Fails with "reference out of range from _linenoise"'
+    cause "Fails with \"reference out of range from _linenoise\""
   end
 
   def install
@@ -23,7 +21,7 @@ class Redis < Formula
     ENV["OBJARCH"] = "-arch #{MacOS.preferred_arch}"
 
     # Head and stable have different code layouts
-    src = (buildpath/'src/Makefile').exist? ? buildpath/'src' : buildpath
+    src = (buildpath/"src/Makefile").exist? ? buildpath/"src" : buildpath
     system "make", "-C", src, "CC=#{ENV.cc}"
 
     %w[benchmark cli server check-dump check-aof sentinel].each { |p| bin.install src/"redis-#{p}" }
@@ -36,8 +34,8 @@ class Redis < Formula
       s.gsub! "\# bind 127.0.0.1", "bind 127.0.0.1"
     end
 
-    etc.install 'redis.conf'
-    etc.install 'sentinel.conf' => 'redis-sentinel.conf'
+    etc.install "redis.conf"
+    etc.install "sentinel.conf" => "redis-sentinel.conf"
   end
 
   plist_options :manual => "redis-server #{HOMEBREW_PREFIX}/etc/redis.conf"

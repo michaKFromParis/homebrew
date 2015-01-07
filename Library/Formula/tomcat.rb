@@ -1,31 +1,24 @@
 require 'formula'
 
 class Tomcat < Formula
-  homepage 'http://tomcat.apache.org/'
-  url 'http://www.apache.org/dyn/closer.cgi?path=tomcat/tomcat-7/v7.0.53/bin/apache-tomcat-7.0.53.tar.gz'
-  sha1 '269a01f03ed22e5ad7fa33dec300ef40cac96440'
+  homepage "http://tomcat.apache.org/"
+  url "http://www.apache.org/dyn/closer.cgi?path=tomcat/tomcat-8/v8.0.15/bin/apache-tomcat-8.0.15.tar.gz"
+  sha1 "e9b6c04f3d337a7a1e50acd175295b8c30e9d3b2"
+
+  bottle do
+    cellar :any
+    sha1 "afcce9cce701aa992521e912a64820c5cf281d76" => :yosemite
+    sha1 "31ac8950914cd7cb17d51979d2e51c10e5071443" => :mavericks
+    sha1 "f4f9f3a45f15ff71e8f7a8c5468227cfc374f158" => :mountain_lion
+  end
 
   option "with-fulldocs", "Install full documentation locally"
 
-  devel do
-    url "http://www.apache.org/dyn/closer.cgi?path=tomcat/tomcat-8/v8.0.5/bin/apache-tomcat-8.0.5.tar.gz"
-    sha1 "dc21157e8577132999f090859be2c4468e841c23"
-
-    resource "fulldocs" do
-      url "http://www.apache.org/dyn/closer.cgi?path=/tomcat/tomcat-8/v8.0.5/bin/apache-tomcat-8.0.5-fulldocs.tar.gz"
-      version "8.0.5"
-      sha1 "8d27a447e1d38d6491d47e15d66c4bc9b03ef55f"
-    end
+  resource "fulldocs" do
+    url "http://www.apache.org/dyn/closer.cgi?path=/tomcat/tomcat-8/v8.0.15/bin/apache-tomcat-8.0.15-fulldocs.tar.gz"
+    version "8.0.15"
+    sha1 "c010691b690f23b3320702f7a9b2fde51d885a44"
   end
-
-  resource 'fulldocs' do
-    url 'http://www.apache.org/dyn/closer.cgi?path=/tomcat/tomcat-7/v7.0.53/bin/apache-tomcat-7.0.53-fulldocs.tar.gz'
-    version '7.0.53'
-    sha1 '4a6585ee59d7fef1e144652227986f9e390b048c'
-  end
-
-  # Keep log folders
-  skip_clean 'libexec'
 
   def install
     # Remove Windows scripts

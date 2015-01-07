@@ -2,43 +2,54 @@ require "formula"
 
 class Ola < Formula
   homepage "http://www.openlighting.org/ola/"
-  url "https://github.com/OpenLightingProject/ola/releases/download/0.9.0/ola-0.9.0.tar.gz"
-  sha1 "aff9bf0802d4e6fcbdc5a2ffcdb7ba25d67fd209"
+  url "https://github.com/OpenLightingProject/ola/releases/download/0.9.3/ola-0.9.3.tar.gz"
+  sha1 "f6a81087761218063a4bb8006b73ffa407cd0170"
 
   bottle do
-    sha1 "6e6b052f3c4f7dd4f413be82bc8858265c156e56" => :mavericks
-    sha1 "4104956ee3b641f353bc4d24c5edcf9c6888d3e8" => :mountain_lion
-    sha1 "449b86401a2aa4ac6445a7839fe82035a747d264" => :lion
+    sha1 "084b25099b2eaf5d90a69ebc20b43c0cf338b614" => :yosemite
+    sha1 "64e7e1a34c1840a7315449a3cc037f07bb75407a" => :mavericks
+    sha1 "4a4d4b3b9909d0e40b9c4658fc7f41713bc20a0a" => :mountain_lion
+  end
+
+  head do
+    url "https://github.com/OpenLightingProject/ola.git"
+
+    depends_on "autoconf" => :build
+    depends_on "automake" => :build
+    depends_on "libtool" => :build
   end
 
   option :universal
 
-  depends_on 'pkg-config' => :build
+  depends_on "pkg-config" => :build
   depends_on "cppunit"
   depends_on "protobuf-c"
   depends_on "libmicrohttpd"
   depends_on "libusb"
   depends_on "liblo"
+  depends_on "ossp-uuid"
   depends_on :python => :optional
+  depends_on "doxygen" => :optional
 
   def install
     ENV.universal_binary if build.universal?
 
     args = %W[
-      --disable-debug
       --disable-fatal-warnings
       --disable-dependency-tracking
       --disable-silent-rules
       --prefix=#{prefix}
     ]
+
     args << "--enable-python-libs" if build.with? "python"
+    args << "--enable-doxygen-man" if build.with? "doxygen"
 
+    system "autoreconf", "-i" if build.head?
     system "./configure", *args
-
     system "make", "install"
   end
 
   test do
-    system "ola_plugin_info"
+    system bin/"ola_plugin_info"
   end
 end

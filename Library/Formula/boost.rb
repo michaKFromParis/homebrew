@@ -1,76 +1,34 @@
-require 'formula'
-
-class UniversalPython < Requirement
-  satisfy(:build_env => false) { archs_for_command("python").universal? }
-
-  def message; <<-EOS.undent
-    A universal build was requested, but Python is not a universal build
-
-    Boost compiles against the Python it finds in the path; if this Python
-    is not a universal build then linking will likely fail.
-    EOS
-  end
-end
-
 class Boost < Formula
-  homepage 'http://www.boost.org'
-  url 'https://downloads.sourceforge.net/project/boost/boost/1.55.0/boost_1_55_0.tar.bz2'
-  sha1 'cef9a0cc7084b1d639e06cd3bc34e4251524c840'
-  revision 1
+  homepage "http://www.boost.org"
+  url "https://downloads.sourceforge.net/project/boost/boost/1.57.0/boost_1_57_0.tar.bz2"
+  sha1 "e151557ae47afd1b43dc3fac46f8b04a8fe51c12"
 
-  head 'https://github.com/boostorg/boost.git'
+  head "https://github.com/boostorg/boost.git"
 
   bottle do
     cellar :any
-    revision 3
-    sha1 "c5b6b0cad1f8ac1ce69aa6c72facfc650b0cc38a" => :mavericks
-    sha1 "682f32c155bc0b17671bf7ff4323bde489ba44b0" => :mountain_lion
-    sha1 "b62fa644ab17bbce8e5bbc20e72ee0af605e7fc8" => :lion
+    sha1 "5eaa834239277ba3fabdf0f6664400e4e2ff29b4" => :yosemite
+    sha1 "4475c631c1107d50a4da54db5d5cbf938b890a9a" => :mavericks
+    sha1 "4ba6d875fe24548b8af3c0b6631ded562d2da40f" => :mountain_lion
   end
 
   env :userpaths
 
   option :universal
-  option 'with-icu', 'Build regexp engine with icu support'
-  option 'without-single', 'Disable building single-threading variant'
-  option 'without-static', 'Disable building static library variant'
-  option 'with-mpi', 'Build with MPI support'
+  option "with-icu4c", "Build regexp engine with icu support"
+  option "without-single", "Disable building single-threading variant"
+  option "without-static", "Disable building static library variant"
+  option "with-mpi", "Build with MPI support"
   option :cxx11
 
-  depends_on :python => :optional
-  depends_on UniversalPython if build.universal? and build.with? "python"
+  deprecated_option "with-icu" => "with-icu4c"
 
-  if build.with? 'icu'
-    if build.cxx11?
-      depends_on 'icu4c' => 'c++11'
-    else
-      depends_on 'icu4c'
-    end
-  end
-
-  if build.with? 'mpi'
-    if build.cxx11?
-      depends_on 'open-mpi' => 'c++11'
-    else
-      depends_on :mpi => [:cc, :cxx, :optional]
-    end
-  end
-
-  odie 'boost: --with-c++11 has been renamed to --c++11' if build.with? 'c++11'
-
-  stable do
-    # Patches boost::atomic for LLVM 3.4 as it is used on OS X 10.9 with Xcode 5.1
-    # https://github.com/Homebrew/homebrew/issues/27396
-    # https://github.com/Homebrew/homebrew/pull/27436
-    patch :p2 do
-      url "https://github.com/boostorg/atomic/commit/6bb71fdd.diff"
-      sha1 "ca8679011d5293a7fd02cb3b97dde3515b8b2b03"
-    end
-
-    patch :p2 do
-      url "https://github.com/boostorg/atomic/commit/e4bde20f.diff"
-      sha1 "b68f5536474c9f543879698299bd4975538a89eb"
-    end
+  if build.cxx11?
+    depends_on "icu4c" => [:optional, "c++11"]
+    depends_on "open-mpi" => "c++11" if build.with? "mpi"
+  else
+    depends_on "icu4c" => :optional
+    depends_on :mpi => [:cc, :cxx, :optional]
   end
 
   fails_with :llvm do
@@ -80,42 +38,34 @@ class Boost < Formula
 
   def install
     # https://svn.boost.org/trac/boost/ticket/8841
-    if build.with? 'mpi' and build.with? 'single'
+    if build.with? "mpi" and build.with? "single"
       raise <<-EOS.undent
         Building MPI support for both single and multi-threaded flavors
-        is not supported.  Please use '--with-mpi' together with
-        '--without-single'.
-      EOS
-    end
-
-    if build.cxx11? and build.with? 'mpi' and build.with? 'python'
-      raise <<-EOS.undent
-        Building MPI support for Python using C++11 mode results in
-        failure and hence disabled.  Please don't use this combination
-        of options.
+        is not supported.  Please use "--with-mpi" together with
+        "--without-single".
       EOS
     end
 
     ENV.universal_binary if build.universal?
 
-    # Force boost to compile using the appropriate GCC version.
+    # Force boost to compile with the desired compiler
     open("user-config.jam", "a") do |file|
       file.write "using darwin : : #{ENV.cxx} ;\n"
-      file.write "using mpi ;\n" if build.with? 'mpi'
+      file.write "using mpi ;\n" if build.with? "mpi"
     end
 
-    # we specify libdir too because the script is apparently broken
-    bargs = ["--prefix=#{prefix}", "--libdir=#{lib}"]
+    # libdir should be set by --prefix but isn't
+    bootstrap_args = ["--prefix=#{prefix}", "--libdir=#{lib}"]
 
-    if build.with? 'icu'
-      icu4c_prefix = Formula['icu4c'].opt_prefix
-      bargs << "--with-icu=#{icu4c_prefix}"
+    if build.with? "icu"
+      icu4c_prefix = Formula["icu4c"].opt_prefix
+      bootstrap_args << "--with-icu=#{icu4c_prefix}"
     else
-      bargs << '--without-icu'
+      bootstrap_args << "--without-icu"
     end
 
     # Handle libraries that will not be built.
-    without_libraries = []
+    without_libraries = ["python"]
 
     # The context library is implemented as x86_64 ASM, so it
     # won't build on PPC or 32-bit builds
@@ -129,12 +79,11 @@ class Boost < Formula
     # Boost.Log cannot be built using Apple GCC at the moment. Disabled
     # on such systems.
     without_libraries << "log" if ENV.compiler == :gcc || ENV.compiler == :llvm
+    without_libraries << "mpi" if build.without? "mpi"
 
-    without_libraries << "python" if build.without? 'python'
-    without_libraries << "mpi" if build.without? 'mpi'
+    bootstrap_args << "--without-libraries=#{without_libraries.join(",")}"
 
-    bargs << "--without-libraries=#{without_libraries.join(',')}"
-
+    # layout should be synchronized with boost-python
     args = ["--prefix=#{prefix}",
             "--libdir=#{lib}",
             "-d2",
@@ -166,15 +115,15 @@ class Boost < Formula
       end
     end
 
-    system "./bootstrap.sh", *bargs
+    system "./bootstrap.sh", *bootstrap_args
     system "./b2", *args
   end
 
   def caveats
-    s = ''
+    s = ""
     # ENV.compiler doesn't exist in caveats. Check library availability
     # instead.
-    if Dir.glob("#{lib}/libboost_log*").empty?
+    if Dir["#{lib}/libboost_log*"].empty?
       s += <<-EOS.undent
 
       Building of Boost.Log is disabled because it requires newer GCC or Clang.
@@ -190,5 +139,29 @@ class Boost < Formula
     end
 
     s
+  end
+
+  test do
+    (testpath/"test.cpp").write <<-EOS.undent
+      #include <boost/algorithm/string.hpp>
+      #include <string>
+      #include <vector>
+      #include <assert.h>
+      using namespace boost::algorithm;
+      using namespace std;
+
+      int main()
+      {
+        string str("a,b");
+        vector<string> strVec;
+        split(strVec, str, is_any_of(","));
+        assert(strVec.size()==2);
+        assert(strVec[0]=="a");
+        assert(strVec[1]=="b");
+        return 0;
+      }
+    EOS
+    system ENV.cxx, "test.cpp", "-std=c++1y", "-lboost_system", "-o", "test"
+    system "./test"
   end
 end

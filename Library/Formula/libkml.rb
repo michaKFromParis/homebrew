@@ -19,13 +19,20 @@ class Libkml < Formula
     end
   end
 
+  bottle do
+    cellar :any
+    revision 1
+    sha1 "604dafcf5fb8135e89f4636af4ecb21b404b4e4b" => :yosemite
+    sha1 "61000bffb52eb852149276e37b42461fd5f710a7" => :mavericks
+    sha1 "68d01ed7b9748caa23f6309c62e836cb030f673d" => :mountain_lion
+  end
 
   head do
     url 'http://libkml.googlecode.com/svn/trunk/'
 
-    depends_on :autoconf
-    depends_on :automake
-    depends_on :libtool
+    depends_on "autoconf" => :build
+    depends_on "automake" => :build
+    depends_on "libtool" => :build
 
     # see stable patch
     patch do
@@ -45,9 +52,6 @@ class Libkml < Formula
       # If the patch is applied, this find and replace will be unnecessary, but also
       # harmless
       inreplace 'configure.ac', '-Werror', ''
-
-      # Compatibility with Automake 1.13 and newer.
-      inreplace 'configure.ac', 'AM_CONFIG_HEADER', 'AC_CONFIG_HEADER'
 
       system "./autogen.sh"
     end

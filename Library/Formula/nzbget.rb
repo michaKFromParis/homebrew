@@ -1,14 +1,21 @@
-require 'formula'
+require "formula"
 
 class Nzbget < Formula
-  homepage 'http://sourceforge.net/projects/nzbget/'
-  url 'https://downloads.sourceforge.net/project/nzbget/nzbget-stable/12.0/nzbget-12.0.tar.gz'
-  sha1 'b7f3037ca664f09c28ab359cf6091d876d63ba5f'
+  homepage "http://nzbget.net/"
+  url "https://downloads.sourceforge.net/project/nzbget/nzbget-stable/14.1/nzbget-14.1.tar.gz"
+  sha1 "671c0d0b554643e1b58665004c65519a330766db"
 
-  head 'https://nzbget.svn.sourceforge.net/svnroot/nzbget/trunk'
+  head "https://nzbget.svn.sourceforge.net/svnroot/nzbget/trunk"
 
-  depends_on 'pkg-config' => :build
-  depends_on 'libsigc++'
+  bottle do
+    sha1 "b8fa821bf43c2c5ccd2842ce0a57ba0131b150bc" => :yosemite
+    sha1 "78df733e6f5983b32dd66a391cb1c6f6b1a8570a" => :mavericks
+    sha1 "ba78b8016b214a18c80499eb3d17a4aa4a45983b" => :mountain_lion
+  end
+
+  depends_on "pkg-config" => :build
+  depends_on "openssl"
+  depends_on "libsigc++"
 
   fails_with :clang do
     build 500
@@ -19,24 +26,15 @@ class Nzbget < Formula
   end
 
   resource "libpar2" do
-    url "https://downloads.sourceforge.net/project/parchive/libpar2/0.2/libpar2-0.2.tar.gz"
-    sha1 "4b3da928ea6097a8299aadafa703fc6d59bdfb4b"
-  end
-
-  # Bugfixes and ability to cancel par2 repair
-  resource "libpar2_patch" do
-    url "https://gist.githubusercontent.com/Smenus/4576230/raw/e722f2113195ee9b8ee67c1c424aa3f2085b1066/libpar2-0.2-nzbget.patch"
-    sha1 "0dca03f42c0997fd6b537a7dc539d705afb76157"
+    url "https://launchpad.net/libpar2/trunk/0.4/+download/libpar2-0.4.tar.gz"
+    sha1 "c4a5318edac0898dcc8b1d90668cfca2ccfe0375"
   end
 
   def install
     resource("libpar2").stage do
-      buildpath.install resource("libpar2_patch")
-      system "patch -p1 < #{buildpath}/libpar2-0.2-nzbget.patch"
-
-      system "./configure", "--disable-debug", "--disable-dependency-tracking",
+      system "./configure", "--disable-dependency-tracking",
                             "--prefix=#{libexec}/lp2"
-      system "make install"
+      system "make", "install"
     end
 
     # Tell configure where libpar2 is, and tell it to use OpenSSL
@@ -47,7 +45,16 @@ class Nzbget < Formula
                           "--with-tlslib=OpenSSL"
     system "make"
     ENV.j1
-    system "make install"
-    system "make install-conf"
+    system "make", "install"
+    etc.install "nzbget.conf"
+  end
+
+  test do
+    # Start nzbget as a server in daemon-mode
+    system "#{bin}/nzbget", "-D"
+    # Query server for version information
+    system "#{bin}/nzbget", "-V"
+    # Shutdown server daemon
+    system "#{bin}/nzbget", "-Q"
   end
 end

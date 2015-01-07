@@ -2,32 +2,39 @@ require 'formula'
 
 class Scala < Formula
   homepage 'http://www.scala-lang.org/'
-  url 'http://www.scala-lang.org/files/archive/scala-2.11.0.tgz'
-  sha1 '65d1ef6231b4f08444dd10a015d2d82ea5444486'
+  url 'http://www.scala-lang.org/files/archive/scala-2.11.4.tgz'
+  sha1 'a6d319b26ccabe9c609fadebc32e797bf9cb1084'
+
+  bottle do
+    cellar :any
+    sha1 "3135e56649f81649a90ef0cddb3fa9c9a8208864" => :yosemite
+    sha1 "80c33a2bd51cefb57c2e6df0c9956ab49824bb78" => :mavericks
+    sha1 "53f58473692d16a1d88b2e515ab04723573232dc" => :mountain_lion
+  end
 
   option 'with-docs', 'Also install library documentation'
   option 'with-src', 'Also install sources for IDE support'
 
   resource 'docs' do
-    url 'http://www.scala-lang.org/files/archive/scala-docs-2.11.0.zip'
-    sha1 '4194808c15c928e902e9e36dbaaab05ca660213f'
+    url 'http://www.scala-lang.org/files/archive/scala-docs-2.11.4.zip'
+    sha1 'de6a5545f13542667d8ff795883fdf192effce2f'
   end
 
   resource 'src' do
-    url 'https://github.com/scala/scala/archive/v2.11.0.tar.gz'
-    sha1 'bc1e301741854424a2ed8949cc46fa9091bc1b46'
+    url 'https://github.com/scala/scala/archive/v2.11.4.tar.gz'
+    sha1 '15f9a8f1d3947b5e1ddd3c653968481626caf418'
   end
 
   resource 'completion' do
-    url 'https://raw.githubusercontent.com/scala/scala-dist/27bc0c25145a83691e3678c7dda602e765e13413/completion.d/2.9.1/scala'
+    url 'https://raw.githubusercontent.com/scala/scala-dist/v2.11.4/bash-completion/src/main/resources/completion.d/2.9.1/scala'
     sha1 'e2fd99fe31a9fb687a2deaf049265c605692c997'
   end
 
   def install
     rm_f Dir["bin/*.bat"]
     doc.install Dir['doc/*']
-    man1.install Dir['man/man1/*']
-    libexec.install Dir['*']
+    share.install "man"
+    libexec.install "bin", "lib"
     bin.install_symlink Dir["#{libexec}/bin/*"]
     bash_completion.install resource('completion')
     doc.install resource('docs') if build.with? 'docs'
@@ -36,7 +43,7 @@ class Scala < Formula
     # Set up an IntelliJ compatible symlink farm in 'idea'
     idea = prefix/'idea'
     idea.install_symlink libexec/'src', libexec/'lib'
-    (idea/'doc/scala-devel-docs').install_symlink doc => 'api'
+    idea.install_symlink doc => 'doc'
   end
 
   def caveats; <<-EOS.undent
@@ -54,8 +61,6 @@ class Scala < Formula
         }
       }
     EOS
-    output = `'#{bin}/scala' #{file}`
-    assert_equal "4", output.strip
-    assert $?.success?
+    assert_equal "4", shell_output("#{bin}/scala #{file}").strip
   end
 end

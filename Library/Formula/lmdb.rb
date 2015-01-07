@@ -1,34 +1,33 @@
-require 'formula'
+require "formula"
 
 class Lmdb < Formula
-  homepage 'http://symas.com/mdb/'
-  url 'ftp://ftp.openldap.org/pub/OpenLDAP/openldap-release/openldap-2.4.35.tgz'
-  sha1 'db02243150b050baac6a8ea4145ad73a1f6d2266'
+  homepage "http://symas.com/mdb/"
+  url "https://gitorious.org/mdb/mdb.git", :tag => "LMDB_0.9.14"
 
-  head 'git://git.openldap.org/openldap.git', :branch => 'mdb.master'
+  head "git://git.openldap.org/openldap.git", :branch => "mdb.master"
+
+  bottle do
+    cellar :any
+    sha1 "7e7e4fb592dccd7c34553760930a9cc59d58c7fb" => :yosemite
+    sha1 "835766327dd8a41e993a7e5e54ca415cceec1f15" => :mavericks
+    sha1 "5914b3dfe5980896f5242b67cf66fadfb59a0ce5" => :mountain_lion
+  end
 
   def install
-    # .so -> .dylib
-    inreplace 'libraries/liblmdb/Makefile', ".so", ".dylib"
-
-    # fix non-POSIX `cp` multiple source files
-    inreplace 'libraries/liblmdb/Makefile' do |s|
-      s.gsub! 'cp $(IPROGS) $(DESTDIR)$(prefix)/bin',
-              'for f in $(IPROGS); do cp $$f $(DESTDIR)$(prefix)/bin/; done'
-      s.gsub! 'cp $(ILIBS) $(DESTDIR)$(prefix)/lib',
-              'for f in $(ILIBS); do cp $$f $(DESTDIR)$(prefix)/lib/; done'
-      s.gsub! 'cp $(IHDRS) $(DESTDIR)$(prefix)/include',
-              'for f in $(IHDRS); do cp $$f $(DESTDIR)$(prefix)/include/; done'
-      # also fix the /share/man/man path as well
-      s.gsub! 'cp $(IDOCS) $(DESTDIR)$(prefix)/man/man1',
-              'for f in $(IDOCS); do cp $$f $(DESTDIR)$(prefix)/share/man/; done'
+    inreplace "libraries/liblmdb/Makefile" do |s|
+      s.gsub! ".so", ".dylib"
+      s.gsub! "$(DESTDIR)$(prefix)/man/man1", "$(DESTDIR)$(prefix)/share/man/man1"
     end
 
-    man.mkpath
+    man1.mkpath
     bin.mkpath
     lib.mkpath
     include.mkpath
 
     system "make", "-C", "libraries/liblmdb", "install", "prefix=#{prefix}"
+  end
+
+  test do
+    system "#{bin}/mdb_dump", "-V"
   end
 end

@@ -2,14 +2,16 @@ require 'formula'
 require 'keg'
 require 'bottles'
 
-module Homebrew extend self
-
+module Homebrew
   def cleanup
+    # individual cleanup_ methods should also check for the existence of the
+    # appropriate directories before assuming they exist
     return unless HOMEBREW_CELLAR.directory?
 
     if ARGV.named.empty?
       cleanup_cellar
       cleanup_cache
+      cleanup_logs
       unless ARGV.dry_run?
         cleanup_lockfiles
         rm_DS_Store
@@ -19,10 +21,25 @@ module Homebrew extend self
     end
   end
 
+  def cleanup_logs
+    return unless HOMEBREW_LOGS.directory?
+    time = Time.now - 2 * 7 * 24 * 60 * 60 # two weeks
+    HOMEBREW_LOGS.subdirs.each do |dir|
+      if dir.mtime < time
+        if ARGV.dry_run?
+          puts "Would remove: #{dir}"
+        else
+          puts "Removing: #{dir}..."
+          dir.rmtree
+        end
+      end
+    end
+  end
+
   def cleanup_cellar
     HOMEBREW_CELLAR.subdirs.each do |rack|
       begin
-        cleanup_formula Formula.factory(rack.basename.to_s)
+        cleanup_formula Formulary.factory(rack.basename.to_s)
       rescue FormulaUnavailableError
         # Don't complain about directories from DIY installs
       end
@@ -53,23 +70,23 @@ module Homebrew extend self
       puts "Would remove: #{keg}"
     else
       puts "Removing: #{keg}..."
-      keg.rmtree
+      keg.uninstall
     end
   end
 
   def cleanup_cache
+    return unless HOMEBREW_CACHE.directory?
     HOMEBREW_CACHE.children.select(&:file?).each do |file|
       next unless (version = file.version)
       next unless (name = file.basename.to_s[/(.*)-(?:#{Regexp.escape(version)})/, 1])
 
       begin
-        f = Formula.factory(name)
+        f = Formulary.factory(name)
       rescue FormulaUnavailableError
         next
       end
 
-      spec = f.stable || f.devel || f.head
-      if spec.version > version || ARGV.switch?('s') && !f.installed? || bottle_file_outdated?(f, file)
+      if f.version > version || ARGV.switch?('s') && !f.installed? || bottle_file_outdated?(f, file)
         cleanup_cached_file(file)
       end
     end
@@ -94,7 +111,7 @@ module Homebrew extend self
   end
 
   def rm_DS_Store
-    system "find #{HOMEBREW_PREFIX} -name .DS_Store -delete 2>/dev/null"
+    quiet_system "find", HOMEBREW_PREFIX.to_s, "-name", ".DS_Store", "-delete"
   end
 
 end

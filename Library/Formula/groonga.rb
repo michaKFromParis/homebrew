@@ -1,38 +1,44 @@
-require 'formula'
+require "formula"
 
 class Groonga < Formula
-  homepage 'http://groonga.org/'
-  url 'http://packages.groonga.org/source/groonga/groonga-4.0.1.tar.gz'
-  sha1 '96859d352cb6439f8dbe8e5fb55373f796a4a11e'
+  homepage "http://groonga.org/"
+  url "http://packages.groonga.org/source/groonga/groonga-4.0.9.tar.gz"
+  sha1 "0196b3909324f66d303185e67646cba401f23a7e"
 
   bottle do
-    sha1 "e39684c9c88a738496ebbcb0ba2e33c21d922043" => :mavericks
-    sha1 "7692109f8b2ca457c1ae2a6d7314c24d05cda339" => :mountain_lion
-    sha1 "a28d4c0d7de6a8590b8c3a6c1ff0def06485fe84" => :lion
+    sha1 "12b94e2102ab23fe0192f2c9f79cd523c22b4ea2" => :yosemite
+    sha1 "d945ef8bd06bcc31739ab9c21baa398cc4d4f32b" => :mavericks
+    sha1 "0a0d111c1519b51cce93421427ed7e6e25562646" => :mountain_lion
   end
 
-  depends_on 'pkg-config' => :build
-  depends_on 'pcre'
-  depends_on 'msgpack'
+  depends_on "pkg-config" => :build
+  depends_on "pcre"
+  depends_on "msgpack"
   depends_on "mecab" => :optional
   depends_on "mecab-ipadic" if build.with? "mecab"
+  depends_on "lz4" => :optional
+  depends_on "openssl"
 
-  depends_on 'glib' if build.include? 'enable-benchmark'
+  depends_on "glib" if build.include? "enable-benchmark"
 
-  option 'enable-benchmark', "Enable benchmark program for developer use"
+  option "enable-benchmark", "Enable benchmark program for developer use"
 
   def install
     args = %W[
       --prefix=#{prefix}
       --with-zlib
       --disable-zeromq
+      --with-mruby
+      --without-libstemmer
     ]
 
     args << "--enable-benchmark" if build.include? "enable-benchmark"
     args << "--with-mecab" if build.with? "mecab"
+    args << "--with-lz4" if build.with? "lz4"
 
     # ZeroMQ is an optional dependency that will be auto-detected unless we disable it
     system "./configure", *args
+    system "make"
     system "make install"
   end
 end

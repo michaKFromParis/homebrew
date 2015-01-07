@@ -1,49 +1,52 @@
-require 'formula'
+require "formula"
 
 class Python < Formula
-  homepage 'http://www.python.org'
-  head 'http://hg.python.org/cpython', :using => :hg, :branch => '2.7'
-  url 'http://www.python.org/ftp/python/2.7.6/Python-2.7.6.tgz'
-  sha1 '8328d9f1d55574a287df384f4931a3942f03da64'
-  revision 1
+  homepage "https://www.python.org"
+  head "https://hg.python.org/cpython", :using => :hg, :branch => "2.7"
+  url "https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tgz"
+  sha1 "7a191bcccb598ccbf2fa6a0edce24a97df3fc0ad"
 
   bottle do
-    sha1 "bcf43a9f8f5f587a86bdc680dd735a853fa3a8a5" => :mavericks
-    sha1 "781310a1d8d0d6283c2c6c1a88674aad3ada6064" => :mountain_lion
-    sha1 "3a79b8d747f66fb000197cd9b9e0a4596f814d7e" => :lion
+    revision 7
+    sha1 "a81d7c350cebe4e50cfaa7bcfebec8174fc0d83a" => :yosemite
+    sha1 "f25fcc726f9fee63d9450da2788c71d76a4337b3" => :mavericks
+    sha1 "903b4cd31563b3bbf6beea3ecce95ae35689d5e1" => :mountain_lion
   end
 
+  # Please don't add a wide/ucs4 option as it won't be accepted.
+  # More details in: https://github.com/Homebrew/homebrew/pull/32368
   option :universal
-  option 'quicktest', "Run `make quicktest` after the build (for devs; may fail)"
-  option 'with-brewed-tk', "Use Homebrew's Tk (has optional Cocoa and threads support)"
-  option 'with-poll', "Enable select.poll, which is not fully implemented on OS X (http://bugs.python.org/issue5154)"
-  option 'with-dtrace', "Experimental DTrace support (http://bugs.python.org/issue13405)"
+  option "quicktest", "Run `make quicktest` after the build (for devs; may fail)"
+  option "with-brewed-tk", "Use Homebrew's Tk (has optional Cocoa and threads support)"
+  option "with-poll", "Enable select.poll, which is not fully implemented on OS X (http://bugs.python.org/issue5154)"
 
-  depends_on 'pkg-config' => :build
-  depends_on 'readline' => :recommended
-  depends_on 'sqlite' => :recommended
-  depends_on 'gdbm' => :recommended
-  depends_on 'openssl'
-  depends_on 'homebrew/dupes/tcl-tk' if build.with? 'brewed-tk'
-  depends_on :x11 if build.with? 'brewed-tk' and Tab.for_name('tcl-tk').used_options.include?('with-x11')
+  depends_on "pkg-config" => :build
+  depends_on "readline" => :recommended
+  depends_on "sqlite" => :recommended
+  depends_on "gdbm" => :recommended
+  depends_on "openssl"
+  depends_on "homebrew/dupes/tcl-tk" if build.with? "brewed-tk"
+  depends_on :x11 if build.with? "brewed-tk" and Tab.for_name("tcl-tk").with? "x11"
 
-  skip_clean 'bin/pip', 'bin/pip-2.7'
-  skip_clean 'bin/easy_install', 'bin/easy_install-2.7'
+  skip_clean "bin/pip", "bin/pip-2.7"
+  skip_clean "bin/easy_install", "bin/easy_install-2.7"
 
-  resource 'setuptools' do
-    url 'https://pypi.python.org/packages/source/s/setuptools/setuptools-3.6.tar.gz'
-    sha1 '745cbb942f8015dbcbfd9df5cb815adb63c7b0e9'
+  resource "setuptools" do
+    url "https://pypi.python.org/packages/source/s/setuptools/setuptools-9.1.tar.gz"
+    sha1 "b068a670c84df7b961730c6a0d00cd06c7b767f0"
   end
 
-  resource 'pip' do
-    url 'https://pypi.python.org/packages/source/p/pip/pip-1.5.5.tar.gz'
-    sha1 'ce15871b65e412589044ee8a4029fe65bc26b894'
+  resource "pip" do
+    url "https://pypi.python.org/packages/source/p/pip/pip-6.0.3.tar.gz"
+    sha1 "67d4affd83ee2f3514ac1386bee59f10f672517c"
   end
 
-  # Backported security fix for CVE-2014-1912: http://bugs.python.org/issue20246
-  patch :p0 do
-    url "https://gist.githubusercontent.com/leepa/9351856/raw/7f9130077fd760fcf9a25f50b69d9c77b155fbc5/CVE-2014-1912.patch"
-    sha1 "db25abc381f62e9f501ad56aaa2537e48e1b0889"
+  # Patch for pyport.h macro issue
+  # http://bugs.python.org/issue10910
+  # https://trac.macports.org/ticket/44288
+  patch do
+    url "http://bugs.python.org/file30805/issue10910-workaround.txt"
+    sha1 "9926640cb7c8e273e4b451469a2b13d4b9df5ba3"
   end
 
   # Patch to disable the search for Tk.framework, since Homebrew's Tk is
@@ -63,13 +66,21 @@ class Python < Formula
     HOMEBREW_PREFIX/"lib/python2.7/site-packages"
   end
 
+  # setuptools remembers the build flags python is built with and uses them to
+  # build packages later. Xcode-only systems need different flags.
+  def pour_bottle?
+    MacOS::CLT.installed?
+  end
+
   def install
-    opoo 'The given option --with-poll enables a somewhat broken poll() on OS X (http://bugs.python.org/issue5154).' if build.with? 'poll'
+    if build.with? "poll"
+      opoo "The given option --with-poll enables a somewhat broken poll() on OS X (http://bugs.python.org/issue5154)."
+    end
 
     # Unset these so that installing pip and setuptools puts them where we want
     # and not into some other Python the user has installed.
-    ENV['PYTHONHOME'] = nil
-    ENV['PYTHONPATH'] = nil
+    ENV["PYTHONHOME"] = nil
+    ENV["PYTHONPATH"] = nil
 
     args = %W[
              --prefix=#{prefix}
@@ -79,22 +90,20 @@ class Python < Formula
              --enable-framework=#{frameworks}
            ]
 
-    args << '--without-gcc' if ENV.compiler == :clang
-    args << '--with-dtrace' if build.with? 'dtrace'
+    args << "--without-gcc" if ENV.compiler == :clang
 
-    if superenv?
-      distutils_fix_superenv(args)
-    else
-      distutils_fix_stdenv
-    end
+    distutils_fix_superenv(args)
 
     if build.universal?
       ENV.universal_binary
       args << "--enable-universalsdk=/" << "--with-universal-archs=intel"
     end
 
-    # Allow sqlite3 module to load extensions: http://docs.python.org/library/sqlite3.html#f1
-    inreplace("setup.py", 'sqlite_defines.append(("SQLITE_OMIT_LOAD_EXTENSION", "1"))', '') if build.with? 'sqlite'
+    # Allow sqlite3 module to load extensions:
+    # http://docs.python.org/library/sqlite3.html#f1
+    if build.with? "sqlite"
+      inreplace("setup.py", 'sqlite_defines.append(("SQLITE_OMIT_LOAD_EXTENSION", "1"))', '')
+    end
 
     # Allow python modules to use ctypes.find_library to find homebrew's stuff
     # even if homebrew is not a /usr/local/lib. Try this with:
@@ -104,22 +113,25 @@ class Python < Formula
       f.gsub! 'DEFAULT_FRAMEWORK_FALLBACK = [', "DEFAULT_FRAMEWORK_FALLBACK = [ '#{HOMEBREW_PREFIX}/Frameworks',"
     end
 
-    if build.with? 'brewed-tk'
+    if build.with? "brewed-tk"
       tcl_tk = Formula["tcl-tk"].opt_prefix
-      ENV.append 'CPPFLAGS', "-I#{tcl_tk}/include"
-      ENV.append 'LDFLAGS', "-L#{tcl_tk}/lib"
+      ENV.append "CPPFLAGS", "-I#{tcl_tk}/include"
+      ENV.append "LDFLAGS", "-L#{tcl_tk}/lib"
     end
 
     system "./configure", *args
 
-    # HAVE_POLL is "broken" on OS X
-    # See: http://trac.macports.org/ticket/18376 and http://bugs.python.org/issue5154
-    inreplace 'pyconfig.h', /.*?(HAVE_POLL[_A-Z]*).*/, '#undef \1' if build.without? "poll"
+    # HAVE_POLL is "broken" on OS X. See:
+    # http://trac.macports.org/ticket/18376
+    # http://bugs.python.org/issue5154
+    if build.without? "poll"
+      inreplace "pyconfig.h", /.*?(HAVE_POLL[_A-Z]*).*/, '#undef \1'
+    end
 
     system "make"
 
-    ENV.deparallelize # Installs must be serialized
-    # Tell Python not to install into /Applications (default for framework builds)
+    ENV.deparallelize # installs must be serialized
+    # Tell Python not to install into /Applications
     system "make", "install", "PYTHONAPPSDIR=#{prefix}"
     # Demos and Tools
     system "make", "frameworkinstallextras", "PYTHONAPPSDIR=#{share}/python"
@@ -162,11 +174,13 @@ class Python < Formula
     rm_rf Dir["#{site_packages}/setuptools*"]
     rm_rf Dir["#{site_packages}/distribute*"]
 
-    setup_args = [ "-s", "setup.py", "--no-user-cfg", "install", "--force", "--verbose",
-                   "--install-scripts=#{bin}", "--install-lib=#{site_packages}" ]
+    setup_args = ["-s", "setup.py", "--no-user-cfg", "install", "--force",
+                  "--verbose",
+                  "--install-scripts=#{bin}",
+                  "--install-lib=#{site_packages}"]
 
-    (libexec/'setuptools').cd { system "#{bin}/python", *setup_args }
-    (libexec/'pip').cd { system "#{bin}/python", *setup_args }
+    (libexec/"setuptools").cd { system "#{bin}/python", *setup_args }
+    (libexec/"pip").cd { system "#{bin}/python", *setup_args }
 
     # When building from source, these symlinks will not exist, since
     # post_install happens after linking.
@@ -191,7 +205,7 @@ class Python < Formula
     sqlite = Formula["sqlite"].opt_prefix
     cflags = "CFLAGS=-I#{HOMEBREW_PREFIX}/include -I#{sqlite}/include"
     ldflags = "LDFLAGS=-L#{HOMEBREW_PREFIX}/lib -L#{sqlite}/lib"
-    if build.with? 'brewed-tk'
+    if build.with? "brewed-tk"
       tcl_tk = Formula["tcl-tk"].opt_prefix
       cflags += " -I#{tcl_tk}/include"
       ldflags += " -L#{tcl_tk}/lib"
@@ -201,10 +215,9 @@ class Python < Formula
       # The setup.py looks at "-isysroot" to get the sysroot (and not at --sysroot)
       cflags += " -isysroot #{MacOS.sdk_path}"
       ldflags += " -isysroot #{MacOS.sdk_path}"
-      # Same zlib.h-not-found-bug as in env :std (see below)
-      args << "CPPFLAGS=-I#{MacOS.sdk_path}/usr/include"
+      args << "CPPFLAGS=-I#{MacOS.sdk_path}/usr/include" # find zlib
       # For the Xlib.h, Python needs this header dir with the system Tk
-      if build.without? 'brewed-tk'
+      if build.without? "brewed-tk"
         cflags += " -I#{MacOS.sdk_path}/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers"
       end
     end
@@ -216,30 +229,7 @@ class Python < Formula
     # superenv handles that cc finds includes/libs!
     inreplace "setup.py",
               "do_readline = self.compiler.find_library_file(lib_dirs, 'readline')",
-              "do_readline = '#{HOMEBREW_PREFIX}/opt/readline/lib/libhistory.dylib'"
-  end
-
-  def distutils_fix_stdenv
-    # Python scans all "-I" dirs but not "-isysroot", so we add
-    # the needed includes with "-I" here to avoid this err:
-    #     building dbm using ndbm
-    #     error: /usr/include/zlib.h: No such file or directory
-    ENV.append 'CPPFLAGS', "-I#{MacOS.sdk_path}/usr/include" unless MacOS::CLT.installed?
-
-    # Don't use optimizations other than "-Os" here, because Python's distutils
-    # remembers (hint: `python-config --cflags`) and reuses them for C
-    # extensions which can break software (such as scipy 0.11 fails when
-    # "-msse4" is present.)
-    ENV.minimal_optimization
-
-    # We need to enable warnings because the configure.in uses -Werror to detect
-    # "whether gcc supports ParseTuple" (https://github.com/Homebrew/homebrew/issues/12194)
-    ENV.enable_warnings
-    if ENV.compiler == :clang
-      # http://docs.python.org/devguide/setup.html#id8 suggests to disable some Warnings.
-      ENV.append_to_cflags '-Wno-unused-value'
-      ENV.append_to_cflags '-Wno-empty-body'
-    end
+              "do_readline = '#{Formula["readline"].opt_lib}/libhistory.dylib'"
   end
 
   def sitecustomize
@@ -303,7 +293,7 @@ class Python < Formula
     They will install into the site-package directory
       #{site_packages}
 
-    See: https://github.com/Homebrew/homebrew/wiki/Homebrew-and-Python
+    See: https://github.com/Homebrew/homebrew/blob/master/share/doc/homebrew/Homebrew-and-Python.md
     EOS
   end
 
@@ -313,6 +303,7 @@ class Python < Formula
     system "#{bin}/python", "-c", "import sqlite3"
     # Check if some other modules import. Then the linked libs are working.
     system "#{bin}/python", "-c", "import Tkinter; root = Tkinter.Tk()"
+    system bin/"pip", "list"
   end
 end
 
