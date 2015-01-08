@@ -22,12 +22,20 @@ class Libvorbis < Formula
   end
 
   option :universal
+  option "with-10.6", "support OSX 10.6 and up"
+  option "with-10.7", "support OSX 10.7 and up"
+  option "with-10.8", "support OSX 10.8 and up"
+  option "with-10.9", "support OSX 10.9 and up"
 
   depends_on 'pkg-config' => :build
   depends_on 'libogg'
 
   def install
     ENV.universal_binary if build.universal?
+    ENV['MACOSX_DEPLOYMENT_TARGET'] = '10.6' if build.with? "10.6"
+    ENV['MACOSX_DEPLOYMENT_TARGET'] = '10.7' if build.with? "10.7"
+    ENV['MACOSX_DEPLOYMENT_TARGET'] = '10.8' if build.with? "10.8"
+    ENV['MACOSX_DEPLOYMENT_TARGET'] = '10.9' if build.with? "10.9"
 
     system "./autogen.sh" if build.head?
     system "./configure", "--disable-dependency-tracking",

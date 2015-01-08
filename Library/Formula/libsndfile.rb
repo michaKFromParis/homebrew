@@ -23,6 +23,10 @@ class Libsndfile < Formula
   depends_on "libvorbis"
 
   option :universal
+  option "with-10.6", "support OSX 10.6 and up"
+  option "with-10.7", "support OSX 10.7 and up"
+  option "with-10.8", "support OSX 10.8 and up"
+  option "with-10.9", "support OSX 10.9 and up"
 
   # libsndfile doesn't find Carbon.h using XCode 4.3:
   # fixed upstream: https://github.com/erikd/libsndfile/commit/d04e1de82ae0af48fd09d5cb09bf21b4ca8d513c
@@ -43,6 +47,10 @@ class Libsndfile < Formula
 
   def install
     ENV.universal_binary if build.universal?
+    ENV['MACOSX_DEPLOYMENT_TARGET'] = '10.6' if build.with? "10.6"
+    ENV['MACOSX_DEPLOYMENT_TARGET'] = '10.7' if build.with? "10.7"
+    ENV['MACOSX_DEPLOYMENT_TARGET'] = '10.8' if build.with? "10.8"
+    ENV['MACOSX_DEPLOYMENT_TARGET'] = '10.9' if build.with? "10.9"
 
     system "autoreconf", "-i"
     system "./configure", "--disable-dependency-tracking", "--prefix=#{prefix}"
