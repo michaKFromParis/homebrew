@@ -50,7 +50,7 @@ class Resource
   end
 
   def downloader
-    @downloader ||= download_strategy.new(download_name, Download.new(self))
+    download_strategy.new(download_name, Download.new(self))
   end
 
   # Removes /s from resource names; this allows go package names
@@ -148,6 +148,8 @@ class Resource
   private
 
   def detect_version(val)
+    return if val.nil? && url.nil?
+
     case val
     when nil     then Version.detect(url, specs)
     when String  then Version.new(val)

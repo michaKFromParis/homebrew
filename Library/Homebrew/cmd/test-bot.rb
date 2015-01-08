@@ -167,6 +167,8 @@ module Homebrew
       @hash = nil
       @url = nil
       @formulae = []
+      @added_formulae = []
+      @modified_formula = []
       @steps = []
       @tap = tap
       @repository = Homebrew.homebrew_git_repo @tap
@@ -308,8 +310,8 @@ module Homebrew
         formula_path = "Library/Formula"
       end
 
-      @added_formulae = diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "A")
-      @modified_formula = diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "M")
+      @added_formulae += diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "A")
+      @modified_formula += diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "M")
       @formulae += @added_formulae + @modified_formula
     end
 
@@ -378,7 +380,13 @@ module Homebrew
       end
 
       begin
-        deps.each { |d| CompilerSelector.select_for(d.to_formula) }
+        deps.each do |dep|
+          if dep.is_a?(TapDependency) && dep.tap
+            tap_dir = Homebrew.homebrew_git_repo dep.tap
+            test "brew", "tap", dep.tap unless tap_dir.directory?
+          end
+          CompilerSelector.select_for(dep.to_formula)
+        end
         CompilerSelector.select_for(formula)
       rescue CompilerSelectionError => e
         unless installed_gcc
@@ -438,8 +446,10 @@ module Homebrew
         end
         test "brew", "test", "--verbose", formula_name if formula.test_defined?
         if testable_dependents.any?
-          test "brew", "fetch", *uninstalled_testable_dependents
-          test "brew", "install", *uninstalled_testable_dependents
+          if uninstalled_testable_dependents.any?
+            test "brew", "fetch", *uninstalled_testable_dependents
+            test "brew", "install", *uninstalled_testable_dependents
+          end
           test "brew", "test", *testable_dependents
         end
         test "brew", "uninstall", "--force", formula_name
@@ -473,7 +483,8 @@ module Homebrew
       git "rebase", "--abort"
       git "reset", "--hard"
       git "checkout", "-f", "master"
-      git "clean", "--force", "-dx"
+      git "clean", "-fdx"
+      git "clean", "-ffdx" unless $?.success?
     end
 
     def cleanup_after
@@ -481,7 +492,8 @@ module Homebrew
 
       checkout_args = []
       if ARGV.include? '--cleanup'
-        test "git", "clean", "--force", "-dx"
+        test "git", "clean", "-fdx"
+        test "git", "clean", "-ffdx" if steps.last.failed?
         checkout_args << "-f"
       end
 
@@ -590,7 +602,8 @@ module Homebrew
     ENV['HOMEBREW_NO_EMOJI'] = '1'
     if ARGV.include? '--ci-master' or ARGV.include? '--ci-pr' \
        or ARGV.include? '--ci-testing'
-      ARGV << '--cleanup' << '--junit' << '--local'
+      ARGV << "--cleanup" if ENV["JENKINS_HOME"] || ENV["TRAVIS_COMMIT"]
+      ARGV << "--junit" << "--local"
     end
     if ARGV.include? '--ci-master'
       ARGV << '--no-bottle' << '--email'
@@ -748,7 +761,7 @@ module Homebrew
       failed_steps = []
       tests.each do |test|
         test.steps.each do |step|
-          next unless step.failed?
+          next if step.passed?
           failed_steps << step.command_short
         end
       end
