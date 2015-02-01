@@ -27,6 +27,7 @@ require 'date'
 require 'rexml/document'
 require 'rexml/xmldecl'
 require 'rexml/cdata'
+require 'cmd/tap'
 
 module Homebrew
   EMAIL_SUBJECT_FILE = "brew-test-bot.#{MacOS.cat}.email.txt"
@@ -362,18 +363,26 @@ module Homebrew
       changed_dependences = dependencies - unchanged_dependencies
 
       dependents = `brew uses #{formula_name}`.split("\n")
+      dependents -= @formulae
       dependents = dependents.map {|d| Formulary.factory(d)}
-      testable_dependents = dependents.select {|d| d.test_defined? && d.stable.bottled? }
-      uninstalled_testable_dependents = testable_dependents.reject {|d| d.installed? }
-      testable_dependents.map! &:name
-      uninstalled_testable_dependents.map! &:name
+
+      testable_dependents = dependents.select { |d| d.test_defined? && d.bottled? }
 
       formula = Formulary.factory(formula_name)
-      return unless satisfied_requirements?(formula, :stable)
-
       installed_gcc = false
-      deps = formula.stable.deps.to_a
-      reqs = formula.stable.requirements.to_a
+
+      deps = []
+      reqs = []
+
+      if formula.stable
+        return unless satisfied_requirements?(formula, :stable)
+
+        deps |= formula.stable.deps.to_a
+        reqs |= formula.stable.requirements.to_a
+      elsif formula.devel
+        return unless satisfied_requirements?(formula, :devel)
+      end
+
       if formula.devel && !ARGV.include?('--HEAD')
         deps |= formula.devel.deps.to_a
         reqs |= formula.devel.requirements.to_a
@@ -417,6 +426,15 @@ module Homebrew
       install_args = %w[--verbose]
       install_args << "--build-bottle" unless ARGV.include? "--no-bottle"
       install_args << "--HEAD" if ARGV.include? "--HEAD"
+
+      # Pass --devel or --HEAD to install in the event formulae lack stable. Supports devel-only/head-only.
+      # head-only should not have devel, but devel-only can have head. Stable can have all three.
+      if devel_only_tap? formula
+        install_args << "--devel"
+      elsif head_only_tap? formula
+        install_args << "--HEAD"
+      end
+
       install_args << formula_name
       # Don't care about e.g. bottle failures for dependencies.
       ENV["HOMEBREW_DEVELOPER"] = nil
@@ -445,17 +463,25 @@ module Homebrew
           end
         end
         test "brew", "test", "--verbose", formula_name if formula.test_defined?
-        if testable_dependents.any?
-          if uninstalled_testable_dependents.any?
-            test "brew", "fetch", *uninstalled_testable_dependents
-            test "brew", "install", *uninstalled_testable_dependents
+        testable_dependents.each do |dependent|
+          unless dependent.installed?
+            test "brew", "fetch", "--retry", dependent.name
+            next if steps.last.failed?
+            conflicts = dependent.conflicts.map { |c| Formulary.factory(c.name) }.select { |f| f.installed? }
+            conflicts.each do |conflict|
+              test "brew", "unlink", conflict.name
+            end
+            test "brew", "install", dependent.name
+            next if steps.last.failed?
           end
-          test "brew", "test", *testable_dependents
+          if dependent.installed?
+            test "brew", "test", "--verbose", dependent.name
+          end
         end
         test "brew", "uninstall", "--force", formula_name
       end
 
-      if formula.devel && !ARGV.include?('--HEAD') \
+      if formula.devel && formula.stable? && !ARGV.include?('--HEAD') \
          && satisfied_requirements?(formula, :devel)
         test "brew", "fetch", "--retry", "--devel", *formula_fetch_options
         test "brew", "install", "--devel", "--verbose", formula_name
@@ -554,6 +580,14 @@ module Homebrew
       changed_formulae.map!(&:first)
       unchanged_formulae = @formulae - changed_formulae
       changed_formulae + unchanged_formulae
+    end
+
+    def head_only_tap? formula
+      formula.head && formula.devel.nil? && formula.stable.nil? && formula.tap == "homebrew/homebrew-head-only"
+    end
+
+    def devel_only_tap? formula
+      formula.devel && formula.stable.nil? && formula.tap == "homebrew/homebrew-devel-only"
     end
 
     def run

@@ -5,9 +5,10 @@ class JohnJumbo < Formula
   version "1.8.0"
 
   bottle do
-    sha1 "7b1fd2d3d9f12567c70c4e12cbf8cdc525f0f61e" => :yosemite
-    sha1 "4514927c45452ffebaeef56e068d0ea1e709e8c2" => :mavericks
-    sha1 "c91ebc708391e78c2a586c90da7b85cd394fa0ee" => :mountain_lion
+    revision 2
+    sha1 "5ab9f75db6b8303b793fca20948c0d9645a912fe" => :yosemite
+    sha1 "ac84043c8d73c2db6e11b7741685cb46275d37f8" => :mavericks
+    sha1 "7764fe2e72d3f695936e4a05bd7a1f063fd8dda9" => :mountain_lion
   end
 
   conflicts_with "john", :because => "both install the same binaries"
@@ -34,7 +35,9 @@ class JohnJumbo < Formula
 
   def install
     cd "src" do
-      system "./configure"
+      args = []
+      args << "--disable-native-macro" if build.bottle?
+      system "./configure", *args
       system "make", "clean"
       system "make", "-s", "CC=#{ENV.cc}"
     end
@@ -58,7 +61,6 @@ class JohnJumbo < Formula
   end
 
   test do
-    ENV["HOME"] = testpath
     touch "john2.pot"
     system "echo dave:`printf secret | openssl md5` > test"
     output = shell_output("#{bin}/john --pot=#{testpath}/john2.pot --format=raw-md5 test")

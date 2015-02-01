@@ -59,6 +59,13 @@ class PostgresqlDependency < Requirement
   satisfy { which 'pg_config' }
 end
 
+class GPGDependency < Requirement
+  fatal true
+  default_formula "gpg"
+
+  satisfy { which("gpg") || which("gpg2") }
+end
+
 class TeXDependency < Requirement
   fatal true
   cask "mactex"
@@ -119,7 +126,7 @@ class JavaDependency < Requirement
   satisfy { java_version }
 
   def initialize(tags)
-    @version = tags.pop
+    @version = tags.shift if /(\d\.)+\d/ === tags.first
     super
   end
 
