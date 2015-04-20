@@ -1,24 +1,24 @@
 class Git < Formula
   homepage "http://git-scm.com"
-  url "https://www.kernel.org/pub/software/scm/git/git-2.3.0.tar.gz"
-  sha256 "ba2fe814e709a5d0f034ebe82083fce7feed0899b3a8c8b3adf1c5a85d1ce9ac"
+  url "https://www.kernel.org/pub/software/scm/git/git-2.3.5.tar.xz"
+  sha256 "d7711324a58d41b4c46d1e4d560ce17fec5f79fa0311107c15aac866f2c1645a"
 
   head "https://github.com/git/git.git", :shallow => false
 
   bottle do
-    sha1 "53177456ab367faa30e1d49104e8e2c065ac5613" => :yosemite
-    sha1 "549b0d4155ad0ca02edb0a55599006da32b21e00" => :mavericks
-    sha1 "78f9b2bfcdfe7e7d356cc4020df4ec41217f6e25" => :mountain_lion
+    sha256 "35708391ab232b2846df929970c090b2c240792c7cfd6110fab0e7a72bce0c82" => :yosemite
+    sha256 "ccec7a87272392ffa1ce08e056bbef5d00f5514c203b983d8d017317fd1fb283" => :mavericks
+    sha256 "a7a248202bc5275724724b09ead3b1273f3edc95c4c6ff5ae2ca2b0e7cd666cc" => :mountain_lion
   end
 
   resource "man" do
-    url "https://www.kernel.org/pub/software/scm/git/git-manpages-2.3.0.tar.gz"
-    sha256 "8aa4d1e5d7bbf5641a9de92279369d9b20cc266ba7b2888104efa40e80b53559"
+    url "https://www.kernel.org/pub/software/scm/git/git-manpages-2.3.5.tar.xz"
+    sha256 "8a1d580a45f9ca3220a59f96ebab9194c1ae6e1f3b30c8a934807040ce6d1940"
   end
 
   resource "html" do
-    url "https://www.kernel.org/pub/software/scm/git/git-htmldocs-2.3.0.tar.gz"
-    sha256 "f8edf1547d3fd4e7e820dd2fad1b92eaae6335c993c26e4b03989ea3941d8441"
+    url "https://www.kernel.org/pub/software/scm/git/git-htmldocs-2.3.5.tar.xz"
+    sha256 "0e5588248735a209aaf0b7606e647fc9c4f90e0d5184ee28da9a41eccb85eaa1"
   end
 
   option "with-blk-sha1", "Compile with the block-optimized SHA1 implementation"
@@ -54,11 +54,11 @@ class Git < Formula
     if build.with? "brewed-svn"
       ENV["PERLLIB_EXTRA"] = "#{Formula["subversion"].prefix}/Library/Perl/#{perl_version}/darwin-thread-multi-2level"
     elsif MacOS.version >= :mavericks
-      ENV["PERLLIB_EXTRA"] = %W{
+      ENV["PERLLIB_EXTRA"] = %W[
         #{MacOS.active_developer_dir}
         /Library/Developer/CommandLineTools
         /Applications/Xcode.app/Contents/Developer
-      }.uniq.map { |p|
+      ].uniq.map { |p|
         "#{p}/Library/Perl/#{perl_version}/darwin-thread-multi-2level"
       }.join(":")
     end
@@ -75,8 +75,6 @@ class Git < Formula
     end
 
     ENV["NO_GETTEXT"] = "1" if build.without? "gettext"
-
-    ENV["GIT_DIR"] = cached_download/".git" if build.head?
 
     system "make", "prefix=#{prefix}",
                    "sysconfdir=#{etc}",

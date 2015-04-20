@@ -2,14 +2,14 @@
 # of Homebrew.
 class Mercurial < Formula
   homepage "http://mercurial.selenic.com/"
-  url "http://mercurial.selenic.com/release/mercurial-3.3.tar.gz"
-  sha1 "9bc03b6e82ce7bccb9d2608c7a5c4023adf2290c"
+  url "http://mercurial.selenic.com/release/mercurial-3.3.3.tar.gz"
+  sha1 "999d5db4961e2c745f17df44d7ae64dce2d8425b"
 
   bottle do
     cellar :any
-    sha1 "7bb6b5981e4691e843fec9916dcc5462192f2f95" => :yosemite
-    sha1 "5f774994e0d2dd796555669de2374b8e693d5fc5" => :mavericks
-    sha1 "4919027d32f367e1b418b0798b4226bba76d3f56" => :mountain_lion
+    sha256 "d8e1617d7b943d48d6e3db7d5792be749fa8aec4b3f5a6ff74ff1dc6f3253925" => :yosemite
+    sha256 "cc932a8efa6ed7b34c1a52b29833e1a77a57ee452159f8008bc890343c16af98" => :mavericks
+    sha256 "b9fbad5fcfd0e37496c613d3b9444d3c4ca66d7ab1deb9cf12c227c90d97d7ac" => :mountain_lion
   end
 
   def install

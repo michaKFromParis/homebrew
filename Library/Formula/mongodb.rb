@@ -1,48 +1,66 @@
-require "formula"
+require "language/go"
 
 class Mongodb < Formula
   homepage "https://www.mongodb.org/"
 
-  url "https://fastdl.mongodb.org/src/mongodb-src-r2.6.7.tar.gz"
-  sha1 "c11c9d31063f2fc126249f7580e8417a8f4ef2b5"
-
-  bottle do
-    sha1 "4b1749b645a744b38b4959daac46bf80353e3b32" => :yosemite
-    sha1 "95725282b89443fafcdc0974e60b10bd295b48ee" => :mavericks
-    sha1 "2da546a136e48a5f9dc86287c329b5741b77bd14" => :mountain_lion
+  depends_on "go" => :build
+  stable do
+    url "https://fastdl.mongodb.org/src/mongodb-src-r3.0.2.tar.gz"
+    sha256 "010522203cdb9bbff52fbd9fe299b67686bb1256e2e55eb78abf35444f668399"
+    go_resource "github.com/mongodb/mongo-tools" do
+      url "https://github.com/mongodb/mongo-tools.git",
+        :tag => "r3.0.1",
+        :revision => "bc08e57abb71b2edd1cc3ab8f9f013409718f197"
+    end
   end
 
   devel do
-    # This can't be bumped past 2.7.7 until we decide what to do with
-    # https://github.com/Homebrew/homebrew/pull/33652
-    url "https://fastdl.mongodb.org/src/mongodb-src-r2.7.7.tar.gz"
-    sha1 "ce223f5793bdf5b3e1420b0ede2f2403e9f94e5a"
-
-    # Remove this with the next devel release. Already merged in HEAD.
-    # https://github.com/mongodb/mongo/commit/8b8e90fb
-    patch do
-      url "https://github.com/mongodb/mongo/commit/8b8e90fb.diff"
-      sha1 "9f9ce609c7692930976690cae68aa4fce1f8bca3"
+    url "https://fastdl.mongodb.org/src/mongodb-src-r3.1.1.tar.gz"
+    sha256 "4f983680ff1cc61d021daed2e2d24c54c069d965ec47276678296240d59efb6f"
+    go_resource "github.com/mongodb/mongo-tools" do
+      url "https://github.com/mongodb/mongo-tools.git",
+        :tag => "r3.1.1",
+        :revision => "6c959d3a8bd9704b5ee9e17e60a4236db6887dc3"
     end
+  end
+
+  bottle do
+    sha256 "1f770eefcd53060a807d85a8007d426e685f191cc9ea4afa1f7d465d2bf3d643" => :yosemite
+    sha256 "2638bfa5fd373a67650d7476678757ea0575153b149342e288dece1782bd79cf" => :mavericks
+    sha256 "1e93d503ad004245845bea11e0d4a831860af9d0ae35d674f95b8609fcae40bd" => :mountain_lion
   end
 
   option "with-boost", "Compile using installed boost, not the version shipped with mongodb"
 
   depends_on "boost" => :optional
+  depends_on "go" => :build
   depends_on :macos => :snow_leopard
   depends_on "scons" => :build
   depends_on "openssl" => :optional
 
-  # Review this patch with each release.
-  # This modifies the SConstruct file to include 10.10 as an accepted build option.
-  if MacOS.version == :yosemite
-    patch do
-      url "https://raw.githubusercontent.com/DomT4/scripts/fbc0cda/Homebrew_Resources/Mongodb/mongoyosemite.diff"
-      sha1 "f4824e93962154aad375eb29527b3137d07f358c"
-    end
-  end
-
   def install
+    ENV.libcxx if build.devel?
+
+    # New Go tools have their own build script but the server scons "install" target is still
+    # responsible for installing them.
+    Language::Go.stage_deps resources, buildpath/"src"
+
+    cd "src/github.com/mongodb/mongo-tools" do
+      args = %W[]
+      # Once https://github.com/mongodb/mongo-tools/issues/11 is fixed, also set CPATH.
+      # For now, use default include path
+      #
+      if build.with? "openssl"
+        args << "ssl"
+        ENV["LIBRARY_PATH"] = "#{Formula["openssl"].opt_prefix}/lib"
+        # ENV["CPATH"] = "#{Formula["openssl"].opt_prefix}/include"
+      end
+      system "./build.sh", *args
+    end
+
+    mkdir "src/mongo-tools"
+    cp Dir["src/github.com/mongodb/mongo-tools/bin/*"], "src/mongo-tools/"
+
     args = %W[
       --prefix=#{prefix}
       -j#{ENV.make_jobs}
@@ -51,11 +69,8 @@ class Mongodb < Formula
       --osx-version-min=#{MacOS.version}
     ]
 
-    # --full installs development headers and client library, not just binaries
-    # (only supported pre-2.7)
-    args << "--full" if build.stable?
     args << "--use-system-boost" if build.with? "boost"
-    args << "--64" if MacOS.prefer_64_bit?
+    args << "--use-new-tools"
 
     if build.with? "openssl"
       args << "--ssl" << "--extrapath=#{Formula["openssl"].opt_prefix}"
@@ -110,12 +125,12 @@ class Mongodb < Formula
       <key>HardResourceLimits</key>
       <dict>
         <key>NumberOfFiles</key>
-        <integer>1024</integer>
+        <integer>65536</integer>
       </dict>
       <key>SoftResourceLimits</key>
       <dict>
         <key>NumberOfFiles</key>
-        <integer>1024</integer>
+        <integer>65536</integer>
       </dict>
     </dict>
     </plist>

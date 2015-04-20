@@ -1,7 +1,7 @@
 class Cpanminus < Formula
   homepage "https://github.com/miyagawa/cpanminus"
-  url "https://github.com/miyagawa/cpanminus/archive/1.7024.tar.gz"
-  sha1 "9b905ecd906a5afe7340035475d11c15a54ebd35"
+  url "https://github.com/miyagawa/cpanminus/archive/1.7029.tar.gz"
+  sha256 "755e37c3ed21e0cea16ad39714e463ba9898083784c33361aec607f00523783d"
 
   head "https://github.com/miyagawa/cpanminus.git"
 

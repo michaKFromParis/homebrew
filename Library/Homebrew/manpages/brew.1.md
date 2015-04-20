@@ -53,13 +53,15 @@ Note that these flags should only appear after a command.
   * `cat` <formula>:
     Display the source to <formula>.
 
-  * `cleanup [--force] [-ns]` [<formulae>]:
+  * `cleanup [--force] [--prune=<days>] [-ns]` [<formulae>]:
     For all installed or specific formulae, remove any older versions from the
     cellar. By default, does not remove out-of-date keg-only brews, as other
     software may link directly to specific versions. In addition old downloads from
     the Homebrew download-cache are deleted.
 
     If `--force` is passed, remove out-of-date keg-only brews as well.
+
+    If `--prune=<days>` is specified, remove all cache files older than <days>.
 
     If `-n` is passed, show what would be removed, but do not actually remove anything.
 
@@ -139,7 +141,7 @@ Note that these flags should only appear after a command.
     stable version.
 
     If `-v` is passed, do a verbose VCS checkout, if the url represents a CVS.
-    This useful for seeing if an existing VCS cache has been updated.
+    This is useful for seeing if an existing VCS cache has been updated.
 
     If `--force` is passed, remove a previously cached version and re-fetch.
 
@@ -237,7 +239,7 @@ Note that these flags should only appear after a command.
 
     If `--force` is passed, Homebrew will allow keg-only formulae to be linked.
 
-  * `linkapps [--local] [<formulae>]`:
+  * `linkapps [--local]` [<formulae>]:
     Find installed formulae that have compiled `.app`-style "application"
     packages for OS X, and symlink those apps into `/Applications`, allowing
     for easier access.
@@ -327,7 +329,7 @@ Note that these flags should only appear after a command.
   * `sh [--env=std]`:
     Instantiate a Homebrew build environment. Uses our years-battle-hardened
     Homebrew build logic to help your `./configure && make && make install`
-    or even your `gem install` succeeed. Especially handy if you run Homebrew
+    or even your `gem install` succeed. Especially handy if you run Homebrew
     in a Xcode-only configuration since it adds tools like make to your PATH
     which otherwise build-systems would not find.
 
@@ -337,9 +339,8 @@ Note that these flags should only appear after a command.
     <tap> is of the form <user>/<repo>, e.g. `brew tap homebrew/dupes`.
 
   * `tap --repair`:
-
-    Ensures all tapped formula are symlinked into Library/Formula and prunes dead
-    formula from Library/Formula.
+    Ensure all tapped formulae are symlinked into Library/Formula and prune dead
+    formulae from Library/Formula.
 
   * `test` [--devel|--HEAD] [--debug] <formula>:
     A few formulae provide a test method. `brew test <formula>` runs this
@@ -360,13 +361,12 @@ Note that these flags should only appear after a command.
     for temporarily disabling a formula:
     `brew unlink foo && commands && brew link foo`.
 
-  * `unlinkapps [--local] [<formulae>]`:
+  * `unlinkapps [--local]` [<formulae>]:
     Removes links created by `brew linkapps`.
 
     If no <formulae> are provided, all linked app will be removed.
 
   * `unpack [--git|--patch] [--destdir=<path>]` <formulae>:
-
     Unpack the source files for <formulae> into subdirectories of the current
     working directory. If `--destdir=<path>` is given, the subdirectories will
     be created in the directory named by `<path>` instead.
@@ -563,12 +563,6 @@ can take several different forms:
   * HOMEBREW\_INSTALL\_BADGE:
     Text printed before the installation summary of each successful build.
     Defaults to the beer emoji.
-
-  * HOMEBREW\_SOURCEFORGE\_MIRROR:
-    If set, Homebrew will use the value of `HOMEBREW_SOURCEFORGE_MIRROR` to
-    select a SourceForge mirror for downloading bottles.
-
-    *Example:* `export HOMEBREW_SOURCEFORGE_MIRROR='heanet'`
 
   * HOMEBREW\_SVN:
     When exporting from Subversion, Homebrew will use `HOMEBREW_SVN` if set,

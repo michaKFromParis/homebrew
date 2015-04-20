@@ -3,13 +3,14 @@ require "language/go"
 
 class Fzf < Formula
   homepage "https://github.com/junegunn/fzf"
-  url "https://github.com/junegunn/fzf/archive/0.9.2.tar.gz"
-  sha1 "b065794baa83b418ee2ca1e87c46a19c0478bd7c"
+  url "https://github.com/junegunn/fzf/archive/0.9.10.tar.gz"
+  sha1 "a76510e2f714c09c6122c13d569d35e75d525490"
+  head 'https://github.com/junegunn/fzf.git'
 
   bottle do
-    sha1 "36a1edab80c2afba434775977489b1a3bd978805" => :yosemite
-    sha1 "79a52c59094b56a6df6de727725ae47f2af396db" => :mavericks
-    sha1 "3e34541560524b53a95134f7786ab7057a48e330" => :mountain_lion
+    sha256 "0d4e78a2366149329fb9db7f6972972608f7b15a807fc0141ef050c5b7b08c4a" => :yosemite
+    sha256 "74ec9e0f08a522036aaca48d5e4172452cba4be89e49228a34e4fc28c6bfebdf" => :mavericks
+    sha256 "aff3a0dad4c15bf9478194436aa6588f0f51587ee0ea27a10dcc6a8c7f10aa7a" => :mountain_lion
   end
 
   depends_on "go" => :build
@@ -35,8 +36,12 @@ class Fzf < Formula
       bin.install "fzf"
     end
 
-    prefix.install %w[install uninstall fzf-completion.bash fzf-completion.zsh LICENSE]
+    prefix.install %w[install uninstall LICENSE]
+    (prefix/"shell").install %w[bash zsh fish].map { |s| "shell/key-bindings.#{s}" }
+    (prefix/"shell").install "shell/completion.bash"
     (prefix/"plugin").install "plugin/fzf.vim"
+    man1.install "man/man1/fzf.1"
+    bin.install "bin/fzf-tmux"
   end
 
   def caveats; <<-EOS.undent

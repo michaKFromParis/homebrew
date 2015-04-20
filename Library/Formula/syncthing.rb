@@ -1,11 +1,14 @@
 class Syncthing < Formula
-  homepage "http://syncthing.net"
-  url "https://github.com/syncthing/syncthing.git", :tag => "v0.10.22"
+  homepage "https://syncthing.net/"
+  url "https://github.com/syncthing/syncthing.git",
+    :tag => "v0.10.30", :revision => "3cc4cb0a0b71908ae2d6392f14457e7ca6712278"
+
+  head "https://github.com/syncthing/syncthing.git"
 
   bottle do
-    sha1 "beef7f4d6477edbe240e7f01dd4367609ed327f9" => :yosemite
-    sha1 "b4aa768e09083fb6032f55ab9e2b9b8b3c70dad8" => :mavericks
-    sha1 "0103311b2e52378d7647f330ff6c7fb5c4c7c775" => :mountain_lion
+    sha256 "b2f6ac64a11e19dfddd6f78466050e3d2e0ae977dad51a98c71f1a16326f51f5" => :yosemite
+    sha256 "ee5447e5933cf974e1e33f98c2058f88851921f81975437cab391f60f09b4e39" => :mavericks
+    sha256 "0772de41191b2d666a5473fac4796ae9ecd66ec60f636b4b2661bb3b6da0398f" => :mountain_lion
   end
 
   depends_on "go" => :build
@@ -17,10 +20,9 @@ class Syncthing < Formula
 
     # FIXTHIS: do this without mutating the cache!
     hack_dir = cached_download/".gopath/src/github.com/syncthing"
-    rm_rf  hack_dir
+    rm_rf hack_dir
     mkdir_p hack_dir
     ln_s cached_download, "#{hack_dir}/syncthing"
-    ENV["GIT_DIR"] = cached_download/".git"
 
     system "./build.sh", "noupgrade"
     bin.install "syncthing"
@@ -45,12 +47,16 @@ class Syncthing < Formula
         <true/>
         <key>ProcessType</key>
         <string>Background</string>
+        <key>StandardErrorPath</key>
+        <string>#{var}/log/syncthing.log</string>
+        <key>StandardOutPath</key>
+        <string>#{var}/log/syncthing.log</string>
       </dict>
     </plist>
     EOS
   end
 
   test do
-    system "#{bin}/syncthing", "-generate", "./"
+    system bin/"syncthing", "-generate", "./"
   end
 end
