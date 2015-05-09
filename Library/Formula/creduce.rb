@@ -1,13 +1,14 @@
 class Creduce < Formula
-  homepage "http://embed.cs.utah.edu/creduce/"
+  homepage "https://embed.cs.utah.edu/creduce/"
   url "https://github.com/csmith-project/creduce/archive/creduce-2.2.1.tar.gz"
   sha256 "9662f4467995604d01f68250ee85a33c22ab4cd6e3cb4d7d06229aca042fce96"
 
   head "https://github.com/csmith-project/creduce.git"
 
   bottle do
-    sha256 "713a0bdfa54779f3b66c845d43e32a03f01b426c134f06ecdc6953f343d414ad" => :yosemite
-    sha256 "4081237f50f5d2e6e787539b2448a1cd1ad6c3fbb120a344a02285a094842139" => :mavericks
+    revision 1
+    sha256 "3ac84a649bed07ef67515fbe88395a803524c0120779d10b71410ca1869aa847" => :yosemite
+    sha256 "383bd9059854d1a143282bce412941aa459f3aa28c84d99a29921787b7c45b67" => :mavericks
   end
 
   depends_on "astyle"
@@ -65,7 +66,7 @@ class Creduce < Formula
 
     system "./configure", "--prefix=#{prefix}",
                           "--disable-dependency-tracking",
-                          "--with-llvm=#{Formula["llvm"].prefix}",
+                          "--with-llvm=#{Formula["llvm"].opt_prefix}",
                           "--bindir=#{libexec}"
     system "make"
     system "make", "install"

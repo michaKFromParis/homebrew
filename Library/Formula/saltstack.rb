@@ -3,11 +3,12 @@ class Saltstack < Formula
   url "https://github.com/saltstack/salt/archive/v2014.7.1.tar.gz"
   sha256 "5fcf2cff700d0719b419c9cb489552645ce1287a15c7b3a8745959773d9b0dd1"
   head "https://github.com/saltstack/salt.git", :branch => "develop", :shallow => false
+  revision 1
 
   bottle do
-    sha1 "4ef3922ffd2b36d775f22fce055ebf692d1e14b7" => :yosemite
-    sha1 "fbb96fe311befd1f68c063c398bfb4a011fc2dc4" => :mavericks
-    sha1 "738d8efecb7b916f10acf8707822945623226524" => :mountain_lion
+    sha256 "ba2dad536526cb11eea8b250a1197e68c1eec80b512ea90bcd7ea973e3111624" => :yosemite
+    sha256 "0bb6b9bb0ea00c8e430213d11be6ef9ef404daef176f401c2d0c89431608f69c" => :mavericks
+    sha256 "287ecda2663c99934af942ae0d034bcbb96972afdae6087e47c7abbca198f77d" => :mountain_lion
   end
 
   devel do
@@ -19,6 +20,7 @@ class Saltstack < Formula
   depends_on :python if MacOS.version <= :snow_leopard
   depends_on "zeromq"
   depends_on "libyaml"
+  depends_on "openssl" # For M2Crypto
 
   # For vendored Swig
   depends_on "pcre" => :build
@@ -78,6 +80,23 @@ class Saltstack < Formula
     sha256 "f12f80c2f66e46c406c53b90c41eb572c29751c407bdbe7204ec6d9264ce16bc"
   end
 
+  # Required by tornado
+  resource "certifi" do
+    url "https://pypi.python.org/packages/source/c/certifi/certifi-14.05.14.tar.gz"
+    sha256 "1e1bcbacd6357c151ae37cf0290dcc809721d32ce21fd6b7339568f3ddef1b69"
+  end
+
+  # Required by tornado
+  resource "backports.ssl_match_hostname" do
+    url "https://pypi.python.org/packages/source/b/backports.ssl_match_hostname/backports.ssl_match_hostname-3.4.0.2.tar.gz"
+    sha256 "07410e7fb09aab7bdaf5e618de66c3dac84e2e3d628352814dc4c37de321d6ae"
+  end
+
+  resource "tornado" do
+    url "https://pypi.python.org/packages/source/t/tornado/tornado-4.1.tar.gz"
+    sha256 "99abd3aede45c93739346ee7384e710120121c3744da155d5cff1c0101702228"
+  end
+
   def install
     resource("swig304").stage do
       system "./configure", "--disable-dependency-tracking", "--prefix=#{buildpath}/swig"
@@ -88,10 +107,20 @@ class Saltstack < Formula
     ENV.prepend_path "PATH", buildpath/"swig/bin"
 
     ENV.prepend_create_path "PYTHONPATH", libexec/"vendor/lib/python2.7/site-packages"
-    %w[requests m2crypto pycrypto pyyaml markupsafe jinja2 pyzmq msgpack-python apache-libcloud].each do |r|
+
+    rs = %w[requests pycrypto pyyaml markupsafe jinja2 pyzmq msgpack-python apache-libcloud]
+    rs += %w[certifi backports.ssl_match_hostname tornado] if build.head?
+
+    rs.each do |r|
       resource(r).stage do
         system "python", *Language::Python.setup_install_args(libexec/"vendor")
       end
+    end
+
+    # M2Crypto always has to be done individually as we have to inreplace OpenSSL path
+    resource("m2crypto").stage do
+      inreplace "setup.py", "self.openssl = '/usr'", "self.openssl = '#{Formula["openssl"].opt_prefix}'"
+      system "python", *Language::Python.setup_install_args(libexec/"vendor")
     end
 
     ENV.prepend_create_path "PYTHONPATH", libexec/"lib/python2.7/site-packages"
