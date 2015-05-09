@@ -1,14 +1,13 @@
-require "formula"
-
 class ShadowsocksLibev < Formula
   homepage "https://github.com/shadowsocks/shadowsocks-libev"
-  url "https://github.com/shadowsocks/shadowsocks-libev/archive/v1.6.2.tar.gz"
-  sha1 "f0b3be37192f3e19a4bba167673b39f073ae14fa"
+  url "https://github.com/shadowsocks/shadowsocks-libev/archive/v2.2.0.tar.gz"
+  sha256 "49688f39649f0f61e323ddba8b02daa5dfe88bf2e051ed91181d266fe824df69"
 
   bottle do
-    sha1 "563ca02feeddc200c026b2b3d91a2924ff8654e3" => :yosemite
-    sha1 "37bb5cf9d4f17f641cdee7a7c83091752d2e15a8" => :mavericks
-    sha1 "af286b8542b1468428b13957313e2d36b1650b3d" => :mountain_lion
+    cellar :any
+    sha256 "0e26d7351e460bf878d9957693fb8e87320a66762600f9bc69e10201f25a0e15" => :yosemite
+    sha256 "cb0f7768bb3b64b0ce2c3d97343f0c4e38054eb5e19215194ca1d7e07e328507" => :mavericks
+    sha256 "827e34eca84e18ad7be87554d686a6257fd71239b35faeb9606a73f87df4cbdc" => :mountain_lion
   end
 
   head "https://github.com/shadowsocks/shadowsocks-libev.git"

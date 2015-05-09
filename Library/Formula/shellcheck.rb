@@ -1,17 +1,16 @@
-require "formula"
 require "language/haskell"
 
 class Shellcheck < Formula
   include Language::Haskell::Cabal
 
   homepage "http://www.shellcheck.net"
-  url "https://github.com/koalaman/shellcheck/archive/v0.3.5.tar.gz"
-  sha1 "e2907df9a28b955bde122c4ddf144c6039c0b85d"
+  url "https://github.com/koalaman/shellcheck/archive/v0.3.7.tar.gz"
+  sha256 "9f421052bc07047b65854544bfe32c5503cdad09f00d7a63a2f28b09b03a08f6"
 
   bottle do
-    sha1 "487e94b0a1efe6953b4eb8163fbe3431f80f526b" => :yosemite
-    sha1 "1aa013ebd2eeb72e61f9cde87e41271abe13511e" => :mavericks
-    sha1 "af81f345a1ad58bdf1c7a742a945aba9eb3819ed" => :mountain_lion
+    sha256 "10b7f52f1bd4224ef1bb45faa45e59b3f0b022746a20d90be1e231bfcc5ee4c0" => :yosemite
+    sha256 "04b58769d3ec3048f97d3fff1d211e0bb7fe6c461c262c328c8dfeb20a38cb60" => :mavericks
+    sha256 "3f741ed31ccbee9bceb405d0e6369971477118a80d60f8f856302676804f30b3" => :mountain_lion
   end
 
   depends_on "ghc" => :build

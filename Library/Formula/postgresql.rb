@@ -1,15 +1,16 @@
 class Postgresql < Formula
-  homepage "http://www.postgresql.org/"
+  homepage "https://www.postgresql.org/"
+  revision 1
 
   stable do
-    url "http://ftp.postgresql.org/pub/source/v9.4.0/postgresql-9.4.0.tar.bz2"
-    sha256 "7a35c3cb77532f7b15702e474d7ef02f0f419527ee80a4ca6036fffb551625a5"
+    url "https://ftp.postgresql.org/pub/source/v9.4.1/postgresql-9.4.1.tar.bz2"
+    sha256 "29ddb77c820095b8f52e5455e9c6c6c20cf979b0834ed1986a8857b84888c3a6"
   end
 
   bottle do
-    sha1 "1cf71ee1cfc061cdc82f6164e72ffba1ac8dd8e8" => :yosemite
-    sha1 "9dbd8dc89c4d3d941bc6f5fa34ef0f321f440780" => :mavericks
-    sha1 "efd661ace5a5f2657d047098dec15136aa4f0249" => :mountain_lion
+    sha256 "f52380ae9ff983c5ee701e3fe0cd6801c93814c1f8b279ac9b517849162dc1db" => :yosemite
+    sha256 "d0c1cf0090ac3e2405c29225f6bb4e912a131804b44303ed2ddffd217b8c6bc3" => :mavericks
+    sha256 "ca57563e2443a0caaf5d17b33dc466258493d8d8ff96203b3bcebe08c5de2d35" => :mountain_lion
   end
 
   option "32-bit"
@@ -53,9 +54,9 @@ class Postgresql < Formula
     ]
 
     args << "--with-python" if build.with? "python"
-    args << "--with-perl" if build.with? "no-perl"
+    args << "--with-perl" if build.with? "perl"
 
-    # The CLT is required to build tcl support on 10.7 and 10.8 because
+    # The CLT is required to build Tcl support on 10.7 and 10.8 because
     # tclConfig.sh is not part of the SDK
     if build.with?("tcl") && (MacOS.version >= :mavericks || MacOS::CLT.installed?)
       args << "--with-tcl"
@@ -88,7 +89,7 @@ class Postgresql < Formula
       https://github.com/Homebrew/homebrew/issues/2510
 
     To migrate existing data from a previous major version (pre-9.4) of PostgreSQL, see:
-      http://www.postgresql.org/docs/9.4/static/upgrading.html
+      https://www.postgresql.org/docs/9.4/static/upgrading.html
     EOS
   end
 
@@ -123,6 +124,6 @@ class Postgresql < Formula
   end
 
   test do
-    system "#{bin}/initdb", testpath
+    system "#{bin}/initdb", testpath/"test"
   end
 end

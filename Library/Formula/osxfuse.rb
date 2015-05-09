@@ -1,14 +1,13 @@
-require "formula"
-
 class Osxfuse < Formula
-  homepage "http://osxfuse.github.io"
-  url "https://github.com/osxfuse/osxfuse.git", :tag => "osxfuse-2.7.4"
+  homepage "https://osxfuse.github.io/"
+  url "https://github.com/osxfuse/osxfuse.git", :tag => "osxfuse-2.7.6",
+                                                :revision => "6ba1962e153e7a76f43bc2f80b0ba0ef2da2cef9"
 
   head "https://github.com/osxfuse/osxfuse.git", :branch => "osxfuse-2"
 
   bottle do
-    sha1 "c1553420b654097011b119a30597faa70527d16d" => :mavericks
-    sha1 "6f1118d7c28d61b032248a2de63b8a2e744c2011" => :mountain_lion
+    sha256 "ea6deeb6e94eaf5eeaf4dd6c9e66cf631ca3c97628991f060c7e5bf9eefc4228" => :mavericks
+    sha256 "5254872690d09b78408530f85b52dd5c93ddc9db11cb6042019e89aca0dabd10" => :mountain_lion
   end
 
   depends_on :macos => :snow_leopard

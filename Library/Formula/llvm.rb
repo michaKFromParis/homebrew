@@ -20,6 +20,11 @@ class Llvm < Formula
       sha1 "9af270a79ae0aeb0628112073167495c43ab836a"
     end
 
+    resource "lldb" do
+      url "http://llvm.org/releases/3.5.1/lldb-3.5.1.src.tar.xz"
+      sha1 "32728e25e6e513528c8c793ae65981150bec7c0d"
+    end
+
     resource "clang-tools-extra" do
       url "http://llvm.org/releases/3.5.1/clang-tools-extra-3.5.1.src.tar.xz"
       sha1 "7a0dd880d7d8fe48bdf0f841eca318337d27a345"
@@ -47,6 +52,10 @@ class Llvm < Formula
       url "http://llvm.org/git/lld.git"
     end
 
+    resource "lldb" do
+      url "http://llvm.org/git/lldb.git"
+    end
+
     resource "clang-tools-extra" do
       url "http://llvm.org/git/clang-tools-extra.git"
     end
@@ -58,17 +67,23 @@ class Llvm < Formula
   option :universal
   option "with-clang", "Build Clang support library"
   option "with-lld", "Build LLD linker"
+  option "with-lldb", "Build LLDB debugger"
   option "with-rtti", "Build with C++ RTTI"
-  option "with-all-targets", "Build all target backends"
+  option "with-python", "Build Python bindings against Homebrew Python"
   option "without-shared", "Don't build LLVM as a shared library"
   option "without-assertions", "Speeds up LLVM, but provides less debug information"
 
   deprecated_option "rtti" => "with-rtti"
-  deprecated_option "all-targets" => "with-all-targets"
   deprecated_option "disable-shared" => "without-shared"
   deprecated_option "disable-assertions" => "without-assertions"
 
-  depends_on :python => :optional
+  if MacOS.version <= :snow_leopard
+    depends_on :python
+  else
+    depends_on :python => :optional
+  end
+  depends_on "cmake" => :build
+  depends_on "swig" if build.with? "lldb"
 
   keg_only :provided_by_osx
 
@@ -80,8 +95,8 @@ class Llvm < Formula
     # Apple's libstdc++ is too old to build LLVM
     ENV.libcxx if ENV.compiler == :clang
 
-    if build.with?("python") && build.without?("shared")
-      fail "The Python bindings need the shared library."
+    if build.with?("lldb") && build.without?("clang")
+      fail "Building LLDB needs Clang support library."
     end
 
     if build.with? "clang"
@@ -91,6 +106,7 @@ class Llvm < Formula
     end
 
     (buildpath/"tools/lld").install resource("lld") if build.with? "lld"
+    (buildpath/"tools/lldb").install resource("lldb") if build.with? "lldb"
 
     if build.universal?
       ENV.permit_arch_flags
@@ -100,26 +116,19 @@ class Llvm < Formula
 
     ENV["REQUIRES_RTTI"] = "1" if build.with?("rtti") || build.with?("clang")
 
-    args = [
-      "--prefix=#{prefix}",
-      "--enable-optimized",
-      # As of LLVM 3.1, attempting to build ocaml bindings with Homebrew's
-      # OCaml 3.12.1 results in errors.
-      "--disable-bindings",
+    args = %w[
+      -DLLVM_OPTIMIZED_TABLEGEN=On
     ]
 
-    if build.with? "all-targets"
-      args << "--enable-targets=all"
-    else
-      args << "--enable-targets=host"
+    args << "-DBUILD_SHARED_LIBS=Off" if build.without? "shared"
+
+    args << "-DLLVM_ENABLE_ASSERTIONS=On" if build.with? "assertions"
+
+    mktemp do
+      system "cmake", "-G", "Unix Makefiles", buildpath, *(std_cmake_args + args)
+      system "make"
+      system "make", "install"
     end
-    args << "--enable-shared" if build.with? "shared"
-
-    args << "--disable-assertions" if build.without? "assertions"
-
-    system "./configure", *args
-    system "make"
-    system "make", "install"
 
     if build.with? "clang"
       system "make", "-C", "projects/libcxx", "install",
@@ -132,10 +141,8 @@ class Llvm < Formula
     end
 
     # install llvm python bindings
-    if build.with? "python"
-      (lib+"python2.7/site-packages").install buildpath/"bindings/python/llvm"
-      (lib+"python2.7/site-packages").install buildpath/"tools/clang/bindings/python/clang" if build.with? "clang"
-    end
+    (lib+"python2.7/site-packages").install buildpath/"bindings/python/llvm"
+    (lib+"python2.7/site-packages").install buildpath/"tools/clang/bindings/python/clang" if build.with? "clang"
   end
 
   test do
