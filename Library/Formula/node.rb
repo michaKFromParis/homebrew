@@ -7,9 +7,10 @@ class Node < Formula
   revision 1
 
   bottle do
-    sha256 "6fa67abcaf006fd9fd749267f08d5e8c33cb7eadd6e94267a49e96659256b06a" => :yosemite
-    sha256 "a995d265c9db0b021de140cdcc78432b96bcbf3fdb6989cc401d9cd7c2164cdd" => :mavericks
-    sha256 "cde73f7ca5b2c080bb8e7d5b99fa02ac43908ec8ad24ef52d9a3a44141ffbe75" => :mountain_lion
+    revision 1
+    sha256 "8c5151f74f57f106a94cbfaa910b28bd089edaf3690b5c9d77ed2de0941af605" => :yosemite
+    sha256 "3c96ca9675bd6b11411a1256c605ff9d0e8366817a2426fc762a3fea21876e9b" => :mavericks
+    sha256 "6a2582a5d5d3613cee4219331f10585c3a066b80c1e31b617a9cc1368d53b4d7" => :mountain_lion
   end
 
   option "with-debug", "Build with debugger hooks"
@@ -31,8 +32,8 @@ class Node < Formula
   end
 
   resource "npm" do
-    url "https://registry.npmjs.org/npm/-/npm-2.7.6.tgz"
-    sha256 "a9445167f68a42ffcdaa36f9f5c14a954237fce6898555c362e8785261fd72a1"
+    url "https://registry.npmjs.org/npm/-/npm-2.10.0.tgz"
+    sha256 "c85b990fd63c4c60a5fcf54deff500438e2918f0b2b010d1ca62d94f29af0d3a"
   end
 
   def install
@@ -94,7 +95,7 @@ class Node < Formula
       # Dirs must exist first: https://github.com/Homebrew/homebrew/issues/35969
       mkdir_p HOMEBREW_PREFIX/"share/man/#{man}"
       rm_f Dir[HOMEBREW_PREFIX/"share/man/#{man}/{npm.,npm-,npmrc.}*"]
-      ln_sf Dir[libexec/"npm/share/man/#{man}/npm*"], HOMEBREW_PREFIX/"share/man/#{man}"
+      ln_sf Dir[libexec/"npm/lib/node_modules/npm/man/#{man}/npm*"], HOMEBREW_PREFIX/"share/man/#{man}"
     end
 
     npm_root = node_modules/"npm"
