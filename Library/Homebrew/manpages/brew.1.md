@@ -353,8 +353,7 @@ Note that these flags should only appear after a command.
     If `--full` is passed, a full clone will be used.
 
   * `tap --repair`:
-    Ensure all tapped formulae are symlinked into Library/Formula and prune dead
-    formulae from Library/Formula.
+    Migrate tapped formulae from symlink-based to directory-based structure.
 
   * `test` [--devel|--HEAD] [--debug] <formula>:
     A few formulae provide a test method. `brew test <formula>` runs this
@@ -404,14 +403,10 @@ Note that these flags should only appear after a command.
 
     If `--rebase` is specified then `git pull --rebase` is used.
 
-  * `upgrade [--all] [install-options]` [<formulae>]:
+  * `upgrade [install-options]` [<formulae>]:
     Upgrade outdated, unpinned brews.
 
     Options for the `install` command are also valid here.
-
-    If `--all` is passed, upgrade all formulae. This is currently the same
-    behaviour as without `--all` but soon `--all` will be required to upgrade
-    all formulae.
 
     If <formulae> are given, upgrade only the specified brews (but do so even
     if they are pinned; see `pin`, `unpin`).
@@ -440,7 +435,8 @@ Note that these flags should only appear after a command.
     Display the file or directory used to cache <formula>.
 
   * `--cellar`:
-    Display Homebrew's Cellar path. *Default:* `/usr/local/Cellar`
+    Display Homebrew's Cellar path. *Default:* `$(brew --prefix)/Cellar`, or if
+    that directory doesn't exist, `$(brew --repository)/Cellar`.
 
   * `--cellar` <formula>:
     Display the location in the cellar where <formula> would be installed,

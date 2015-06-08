@@ -380,7 +380,7 @@ If \fB\-\-full\fR is passed, a full clone will be used\.
 .
 .TP
 \fBtap \-\-repair\fR
-Ensure all tapped formulae are symlinked into Library/Formula and prune dead formulae from Library/Formula\.
+Migrate tapped formulae from symlink\-based to directory\-based structure\.
 .
 .TP
 \fBtest\fR [\-\-devel|\-\-HEAD] [\-\-debug] \fIformula\fR
@@ -432,14 +432,11 @@ Fetch the newest version of Homebrew and all formulae from GitHub using \fBgit\f
 If \fB\-\-rebase\fR is specified then \fBgit pull \-\-rebase\fR is used\.
 .
 .TP
-\fBupgrade [\-\-all] [install\-options]\fR [\fIformulae\fR]
+\fBupgrade [install\-options]\fR [\fIformulae\fR]
 Upgrade outdated, unpinned brews\.
 .
 .IP
 Options for the \fBinstall\fR command are also valid here\.
-.
-.IP
-If \fB\-\-all\fR is passed, upgrade all formulae\. This is currently the same behaviour as without \fB\-\-all\fR but soon \fB\-\-all\fR will be required to upgrade all formulae\.
 .
 .IP
 If \fIformulae\fR are given, upgrade only the specified brews (but do so even if they are pinned; see \fBpin\fR, \fBunpin\fR)\.
@@ -470,7 +467,7 @@ Display the file or directory used to cache \fIformula\fR\.
 .
 .TP
 \fB\-\-cellar\fR
-Display Homebrew\'s Cellar path\. \fIDefault:\fR \fB/usr/local/Cellar\fR
+Display Homebrew\'s Cellar path\. \fIDefault:\fR \fB$(brew \-\-prefix)/Cellar\fR, or if that directory doesn\'t exist, \fB$(brew \-\-repository)/Cellar\fR\.
 .
 .TP
 \fB\-\-cellar\fR \fIformula\fR

@@ -1,14 +1,15 @@
 class Python < Formula
+  desc "Interpreted, interactive, object-oriented programming language"
   homepage "https://www.python.org"
   head "https://hg.python.org/cpython", :using => :hg, :branch => "2.7"
-  url "https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tgz"
-  sha256 "c8bba33e66ac3201dabdc556f0ea7cfe6ac11946ec32d357c4c6f9b018c12c5b"
+  url "https://www.python.org/ftp/python/2.7.10/Python-2.7.10.tgz"
+  sha256 "eda8ce6eec03e74991abb5384170e7c65fcd7522e409b8e83d7e6372add0f12a"
 
   bottle do
-    revision 13
-    sha256 "1fa1d7452fdea531afdcc49a364166a0e48e345e0d9eda5dcebc7e7e7c399d86" => :yosemite
-    sha256 "9737f1e6e2a0aad834740488ab2e5eed25f33ea9de42c6b2101b4ecb18d0c890" => :mavericks
-    sha256 "8cfbbc8c66515f90908901d4e9e648c65446d33e52bd51b73062359c1d469133" => :mountain_lion
+    revision 1
+    sha256 "9e8dc4de4453039b6ace6ec77d948036247cb95c38c7011241e9edd7a69e3458" => :yosemite
+    sha256 "f388982ebc79c01d9c38478dbd2edf2cd93d50a27436c943130e03b3e3fc9c4c" => :mavericks
+    sha256 "6a252fac6253d4c48ac881051ab28927c2e2dd1f143698c2f08f5ed4b2eae797" => :mountain_lion
   end
 
   # Please don't add a wide/ucs4 option as it won't be accepted.
@@ -33,13 +34,13 @@ class Python < Formula
   skip_clean "bin/easy_install", "bin/easy_install-2.7"
 
   resource "setuptools" do
-    url "https://pypi.python.org/packages/source/s/setuptools/setuptools-15.2.tar.gz"
-    sha256 "381e78471fb0eff89c4b1a219e8739f48dd87c76ad2d3a790010ca3a62ee29a4"
+    url "https://pypi.python.org/packages/source/s/setuptools/setuptools-17.0.tar.gz"
+    sha256 "561b33819ef3da2bff89cc8b05fd9b5ea3caeb31ad588b53fdf06f886ac3d200"
   end
 
   resource "pip" do
-    url "https://pypi.python.org/packages/source/p/pip/pip-6.1.1.tar.gz"
-    sha256 "89f3b626d225e08e7f20d85044afa40f612eb3284484169813dc2d0631f2a556"
+    url "https://pypi.python.org/packages/source/p/pip/pip-7.0.1.tar.gz"
+    sha256 "cfec177552fdd0b2d12b72651c8e874f955b4c62c1c2c9f2588cbdc1c0d0d416"
   end
 
   # Patch for pyport.h macro issue

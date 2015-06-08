@@ -1,6 +1,7 @@
 require "formula"
 
 class MobileShell < Formula
+  desc "Remote terminal application"
   homepage "http://mosh.mit.edu/"
   url "https://mosh.mit.edu/mosh-1.2.4.tar.gz"
   sha256 "e74d0d323226046e402dd469a176075fc2013b69b0e67cea49762c957175df46"
@@ -24,8 +25,13 @@ class MobileShell < Formula
 
     # teach mosh to locate mosh-client without referring
     # PATH to support launching outside shell e.g. via launcher
-    inreplace "scripts/mosh", "'mosh-client", "\'#{bin}/mosh-client"
-
+    #
+    # In HEAD, mosh is generated from mosh.pl, This will be in 1.2.5, coming soon.
+    if build.head?
+      inreplace "scripts/mosh.pl", "'mosh-client", "\'#{bin}/mosh-client"
+    else
+      inreplace "scripts/mosh", "'mosh-client", "\'#{bin}/mosh-client"
+    end
     # Upstream prefers O2:
     # https://github.com/keithw/mosh/blob/master/README.md
     ENV.O2

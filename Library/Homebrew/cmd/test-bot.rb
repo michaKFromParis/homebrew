@@ -188,7 +188,7 @@ module Homebrew
 
       begin
         formula = Formulary.factory(argument)
-      rescue FormulaUnavailableError
+      rescue FormulaUnavailableError, TapFormulaAmbiguityError
       end
 
       git "rev-parse", "--verify", "-q", argument
@@ -344,8 +344,8 @@ module Homebrew
         satisfied ||= requirement.satisfied?
         satisfied ||= requirement.optional?
         if !satisfied && requirement.default_formula?
-          default = Formula[requirement.class.default_formula]
-          satisfied = satisfied_requirements?(default, :stable, formula.name)
+          default = Formula[requirement.default_formula]
+          satisfied = satisfied_requirements?(default, :stable, formula.full_name)
         end
         satisfied
       end
@@ -353,7 +353,7 @@ module Homebrew
       if unsatisfied_requirements.empty?
         true
       else
-        name = formula.name
+        name = formula.full_name
         name += " (#{spec})" unless spec == :stable
         name += " (#{dependency} dependency)" if dependency
         skip name
@@ -418,11 +418,7 @@ module Homebrew
         CompilerSelector.select_for(formula)
       rescue CompilerSelectionError => e
         unless installed_gcc
-          if @formulae.include? "gcc"
-            run_as_not_developer { test "brew", "install", "gcc" }
-          else
-            test "brew", "install", "gcc"
-          end
+          run_as_not_developer { test "brew", "install", "gcc" }
           installed_gcc = true
           OS::Mac.clear_version_cache
           retry
@@ -452,11 +448,7 @@ module Homebrew
       testable_dependents = dependents.select { |d| d.test_defined? && d.bottled? }
 
       if (deps | reqs).any? { |d| d.name == "mercurial" && d.build? }
-        if @formulae.include? "mercurial"
-          run_as_not_developer { test "brew", "install", "mercurial" }
-        else
-          test "brew", "install", "mercurial"
-        end
+        run_as_not_developer { test "brew", "install", "mercurial" }
       end
 
       test "brew", "fetch", "--retry", *unchanged_dependencies unless unchanged_dependencies.empty?
@@ -485,8 +477,8 @@ module Homebrew
       # Don't care about e.g. bottle failures for dependencies.
       run_as_not_developer do
         test "brew", "install", "--only-dependencies", *install_args unless dependencies.empty?
+        test "brew", "install", *install_args
       end
-      test "brew", "install", *install_args
       install_passed = steps.last.passed?
       audit_args = [canonical_formula_name]
       audit_args << "--strict" if @added_formulae.include? formula_name
@@ -520,7 +512,7 @@ module Homebrew
             conflicts.each do |conflict|
               test "brew", "unlink", conflict.name
             end
-            test "brew", "install", dependent.name
+            run_as_not_developer { test "brew", "install", dependent.name }
             next if steps.last.failed?
           end
           if dependent.installed?
@@ -533,7 +525,7 @@ module Homebrew
       if formula.devel && formula.stable? && !ARGV.include?('--HEAD') \
          && satisfied_requirements?(formula, :devel)
         test "brew", "fetch", "--retry", "--devel", *formula_fetch_options
-        test "brew", "install", "--devel", "--verbose", canonical_formula_name
+        run_as_not_developer { test "brew", "install", "--devel", "--verbose", canonical_formula_name }
         devel_install_passed = steps.last.passed?
         test "brew", "audit", "--devel", *audit_args
         if devel_install_passed
@@ -718,12 +710,8 @@ module Homebrew
 
     # Tap repository if required, this is done before everything else
     # because Formula parsing and/or git commit hash lookup depends on it.
-    if tap
-      if !repository.directory?
-        safe_system "brew", "tap", tap
-      else
-        quiet_system "brew", "tap", "--repair"
-      end
+    if tap && !repository.directory?
+      safe_system "brew", "tap", tap
     end
 
     if ARGV.include? '--ci-upload'
@@ -737,6 +725,12 @@ module Homebrew
       if !bintray_user || !bintray_key
         raise "Missing BINTRAY_USER or BINTRAY_KEY variables!"
       end
+
+      # Don't pass keys/cookies to subprocesses..
+      ENV["BINTRAY_KEY"] = nil
+      ENV["HUDSON_SERVER_COOKIE"] = nil
+      ENV["JENKINS_SERVER_COOKIE"] = nil
+      ENV["HUDSON_COOKIE"] = nil
 
       ARGV << '--verbose'
 
@@ -768,20 +762,6 @@ module Homebrew
         safe_system "brew", "pull", "--clean", pull_pr
       end
 
-      # Check for existing bottles as we don't want them to be autopublished
-      # on Bintray until manually `brew pull`ed.
-      existing_bottles = {}
-      Dir.glob("*.bottle*.tar.gz") do |filename|
-        formula_name = bottle_filename_formula_name filename
-        canonical_formula_name = if tap
-          "#{tap}/#{formula_name}"
-        else
-          formula_name
-        end
-        formula = Formulary.factory canonical_formula_name
-        existing_bottles[formula_name] = !!formula.bottle
-      end
-
       ENV["GIT_AUTHOR_NAME"] = ENV["GIT_COMMITTER_NAME"]
       ENV["GIT_AUTHOR_EMAIL"] = ENV["GIT_COMMITTER_EMAIL"]
       bottle_args = ["--merge", "--write", *Dir["*.bottle.rb"]]
@@ -799,16 +779,18 @@ module Homebrew
       formula_packaged = {}
 
       Dir.glob("*.bottle*.tar.gz") do |filename|
-        formula_name = bottle_filename_formula_name filename
-        canonical_formula_name = if tap
-          "#{tap}/#{formula_name}"
-        else
-          formula_name
-        end
+        formula_name, canonical_formula_name = bottle_resolve_formula_names filename
         formula = Formulary.factory canonical_formula_name
         version = formula.pkg_version
         bintray_package = Bintray.package formula_name
-        existing_bottle = existing_bottles[formula_name]
+
+        if system "curl", "-I", "--silent", "--fail", "--output", "/dev/null",
+                  "#{BottleSpecification::DEFAULT_DOMAIN}/#{bintray_repo}/#{filename}"
+          raise <<-EOS.undent
+            #{filename} is already published. Please remove it manually from
+            https://bintray.com/homebrew/#{bintray_repo}/#{bintray_package}/view#files
+          EOS
+        end
 
         unless formula_packaged[formula_name]
           package_url = "#{bintray_repo_url}/#{bintray_package}"
@@ -824,7 +806,6 @@ module Homebrew
         content_url = "https://api.bintray.com/content/homebrew"
         content_url += "/#{bintray_repo}/#{bintray_package}/#{version}/#{filename}"
         content_url += "?override=1"
-        content_url += "&publish=1" if existing_bottle
         curl "--silent", "--fail", "-u#{bintray_user}:#{bintray_key}",
              "-T", filename, content_url
         puts
