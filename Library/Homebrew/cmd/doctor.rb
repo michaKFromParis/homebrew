@@ -237,6 +237,15 @@ def check_for_broken_symlinks
   end
 end
 
+def check_for_unsupported_osx
+  if MacOS.version >= "10.11" then <<-EOS.undent
+    You are using OS X #{MacOS.version}.
+    We do not provide support for this pre-release version.
+    You may encounter build failures or other breakage.
+    EOS
+  end
+end
+
 if MacOS.version >= "10.9"
   def check_for_installed_developer_tools
     unless MacOS::Xcode.installed? || MacOS::CLT.installed? then <<-EOS.undent
@@ -913,38 +922,25 @@ def check_for_autoconf
 end
 
 def __check_linked_brew f
-  links_found = []
-
-  prefix = f.prefix
-
-  prefix.find do |src|
-    next if src == prefix
-    dst = HOMEBREW_PREFIX + src.relative_path_from(prefix)
-
-    next if !dst.symlink? || !dst.exist? || src != dst.resolved_path
-
-    if src.directory?
-      Find.prune
-    else
-      links_found << dst
+  f.rack.subdirs.each do |prefix|
+    prefix.find do |src|
+      next if src == prefix
+      dst = HOMEBREW_PREFIX + src.relative_path_from(prefix)
+      return true if dst.symlink? && src == dst.resolved_path
     end
   end
 
-  return links_found
+  false
 end
 
 def check_for_linked_keg_only_brews
   return unless HOMEBREW_CELLAR.exist?
 
-  warnings = Hash.new
+  linked = Formula.installed.select { |f|
+    f.keg_only? && __check_linked_brew(f)
+  }
 
-  Formula.each do |f|
-    next unless f.keg_only? and f.installed?
-    links = __check_linked_brew f
-    warnings[f.full_name] = links unless links.empty?
-  end
-
-  unless warnings.empty?
+  unless linked.empty?
     s = <<-EOS.undent
     Some keg-only formula are linked into the Cellar.
     Linking a keg-only formula, such as gettext, into the cellar with
@@ -958,7 +954,7 @@ def check_for_linked_keg_only_brews
     You may wish to `brew unlink` these brews:
 
     EOS
-    warnings.each_key { |f| s << "    #{f}\n" }
+    linked.each { |f| s << "    #{f.full_name}\n" }
     s
   end
 end
@@ -1011,23 +1007,6 @@ def check_git_status
           cd #{HOMEBREW_LIBRARY} && git stash && git clean -d -f
       EOS
     end
-  end
-end
-
-def check_git_ssl_verify
-  if MacOS.version <= :leopard && !ENV['GIT_SSL_NO_VERIFY'] then <<-EOS.undent
-    The version of libcurl provided with Mac OS X #{MacOS.version} has outdated
-    SSL certificates.
-
-    This can cause problems when running Homebrew commands that use Git to
-    fetch over HTTPS, e.g. `brew update` or installing formulae that perform
-    Git checkouts.
-
-    You can force Git to ignore these errors:
-      export GIT_SSL_NO_VERIFY=1
-    or
-      git config --global http.sslVerify false
-    EOS
   end
 end
 

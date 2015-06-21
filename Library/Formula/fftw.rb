@@ -21,9 +21,11 @@ class Fftw < Formula
   option "with-10.7", "support OSX 10.7 and up"
   option "with-10.8", "support OSX 10.8 and up"
   option "with-10.9", "support OSX 10.9 and up"
+  option "with-openmp", "Enable OpenMP parallel transforms"
 
   depends_on :fortran => :optional
   depends_on :mpi => [:cc, :optional]
+  needs :openmp if build.with? "openmp"
 
   def install
     args = ["--enable-shared",
@@ -36,6 +38,7 @@ class Fftw < Formula
 
     args << "--disable-fortran" if build.without? "fortran"
     args << "--enable-mpi" if build.with? "mpi"
+    args << "--enable-openmp" if build.with? "openmp"
 
     ENV.universal_binary if build.universal?
     ENV['MACOSX_DEPLOYMENT_TARGET'] = '10.6' if build.with? "10.6"
@@ -69,7 +72,6 @@ class Fftw < Formula
     # http://www.fftw.org/fftw3_doc/Complex-One_002dDimensional-DFTs.html
     (testpath/'fftw.c').write <<-TEST_SCRIPT.undent
       #include <fftw3.h>
-
       int main(int argc, char* *argv)
       {
           fftw_complex *in, *out;

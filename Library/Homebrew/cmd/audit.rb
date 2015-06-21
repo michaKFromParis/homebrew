@@ -20,6 +20,26 @@ module Homebrew
     ENV.activate_extensions!
     ENV.setup_build_environment
 
+    if ARGV.switch? "D"
+      FormulaAuditor.module_eval do
+        instance_methods.grep(/audit_/).map do |name|
+          method = instance_method(name)
+          define_method(name) do |*args, &block|
+            begin
+              time = Time.now
+              method.bind(self).call(*args, &block)
+            ensure
+              $times[name] ||= 0
+              $times[name] += Time.now - time
+            end
+          end
+        end
+      end
+
+      $times = {}
+      at_exit { puts $times.sort_by{ |k, v| v }.map{ |k, v| "#{k}: #{v}" } }
+    end
+
     ff = if ARGV.named.empty?
       Formula
     else
@@ -56,6 +76,7 @@ end
 class FormulaText
   def initialize path
     @text = path.open("rb", &:read)
+    @lines = @text.lines.to_a
   end
 
   def without_patch
@@ -74,16 +95,13 @@ class FormulaText
     /\Z\n/ =~ @text
   end
 
-  def has_non_ascii_character?
-    /[^\x00-\x7F]/ =~ @text
-  end
-
-  def has_encoding_comment?
-    /^# (en)?coding: utf-8$/i =~ @text
-  end
-
   def =~ regex
     regex =~ @text
+  end
+
+  def line_number regex
+    index = @lines.index { |line| line =~ regex }
+    index ? index + 1 : nil
   end
 end
 
@@ -130,16 +148,39 @@ class FormulaAuditor
       problem "'__END__' was found, but 'DATA' is not used"
     end
 
-    if text.has_non_ascii_character? and not text.has_encoding_comment?
-      problem "Found non-ASCII character: add `# encoding: UTF-8` in the first line"
-    end
-
-    if text.has_encoding_comment? and not text.has_non_ascii_character?
-      problem "Remove the redundant `# encoding: UTF-8`"
-    end
-
     unless text.has_trailing_newline?
       problem "File should end with a newline"
+    end
+
+    return unless @strict
+
+    component_list = [
+      [/^  desc ["'][\S\ ]+["']/,          "desc"          ],
+      [/^  homepage ["'][\S\ ]+["']/,      "homepage"      ],
+      [/^  url ["'][\S\ ]+["']/,           "url"           ],
+      [/^  mirror ["'][\S\ ]+["']/,        "mirror"        ],
+      [/^  version ["'][\S\ ]+["']/,       "version"       ],
+      [/^  (sha1|sha256) ["'][\S\ ]+["']/, "checksum"      ],
+      [/^  head ["'][\S\ ]+["']/,          "head"          ],
+      [/^  stable do/,                     "stable block"  ],
+      [/^  bottle do/,                     "bottle block"  ],
+      [/^  devel do/,                      "devel block"   ],
+      [/^  head do/,                       "head block"    ],
+      [/^  option/,                        "option"        ],
+      [/^  depends_on/,                    "depends_on"    ],
+      [/^  def install/,                   "install method"],
+      [/^  def caveats/,                   "caveats method"],
+      [/^  test do/,                       "test block"    ],
+    ]
+
+    component_list.map do |regex, name|
+      lineno = text.line_number regex
+      next unless lineno
+      [lineno, name]
+    end.compact.each_cons(2) do |c1, c2|
+      unless c1[0] < c2[0]
+        problem "`#{c1[1]}`(line #{c1[0]}) should be put before `#{c2[1]}`(line #{c2[0]})"
+      end
     end
   end
 
@@ -150,15 +191,15 @@ class FormulaAuditor
       end
     end
 
-    if formula.class < GithubGistFormula
+    if Object.const_defined?("GithubGistFormula") && formula.class < GithubGistFormula
       problem "GithubGistFormula is deprecated, use Formula instead"
     end
 
-    if formula.class < ScriptFileFormula
+    if Object.const_defined?("ScriptFileFormula") && formula.class < ScriptFileFormula
       problem "ScriptFileFormula is deprecated, use Formula instead"
     end
 
-    if formula.class < AmazonWebServicesFormula
+    if Object.const_defined?("AmazonWebServicesFormula") && formula.class < AmazonWebServicesFormula
       problem "AmazonWebServicesFormula is deprecated, use Formula instead"
     end
   end
@@ -174,12 +215,12 @@ class FormulaAuditor
     full_name = formula.full_name
 
     if @@aliases.include? name
-      problem "Formula name is conflicted with existed aliases."
+      problem "Formula name conflicts with existing aliases."
       return
     end
 
     if !formula.core_formula? && Formula.core_names.include?(name)
-      problem "Formula name is conflicted with existed core formula."
+      problem "Formula name conflicts with existing core formula."
       return
     end
 
@@ -196,7 +237,7 @@ class FormulaAuditor
     same_name_tap_formulae.delete(full_name)
 
     if same_name_tap_formulae.size > 0
-      problem "Formula name is conflicted with #{same_name_tap_formulae.join ", "}"
+      problem "Formula name conflicts with #{same_name_tap_formulae.join ", "}"
     end
   end
 
@@ -254,7 +295,7 @@ class FormulaAuditor
           problem "Use `depends_on :fortran` instead of `depends_on 'gfortran'`"
         when "open-mpi", "mpich2"
           problem <<-EOS.undent
-            There are multiple conflicting ways to install MPI. Use an MPIDependency:
+            There are multiple conflicting ways to install MPI. Use an MPIRequirement:
               depends_on :mpi => [<lang list>]
             Where <lang list> is a comma delimited list that can include:
               :cc, :cxx, :f77, :f90
@@ -334,7 +375,7 @@ class FormulaAuditor
     end
 
     # Freedesktop is complicated to handle - It has SSL/TLS, but only on certain subdomains.
-    # To enable https Freedesktop change the url from http://project.freedesktop.org/wiki to
+    # To enable https Freedesktop change the URL from http://project.freedesktop.org/wiki to
     # https://wiki.freedesktop.org/project_name.
     # "Software" is redirected to https://wiki.freedesktop.org/www/Software/project_name
     if homepage =~ %r[^http://((?:www|nice|libopenraw|liboil|telepathy|xorg)\.)?freedesktop\.org/(?:wiki/)?]
@@ -468,6 +509,17 @@ class FormulaAuditor
     if text =~ /Formula\.factory\(/
       problem "\"Formula.factory(name)\" is deprecated in favor of \"Formula[name]\""
     end
+
+    if text =~ /system "npm", "install"/ && text !~ %r[opt_libexec}/npm/bin]
+      need_npm = "\#{Formula[\"node\"].opt_libexec\}/npm/bin"
+      problem <<-EOS.undent
+       Please add ENV.prepend_path \"PATH\", \"#{need_npm}"\ to def install
+      EOS
+    end
+
+    if text =~ /system "npm", "install"/ && text !~ /"HOME"/
+      problem "Please add ENV[\"HOME\"] = buildpath/\".brew_home\" to def install"
+    end
   end
 
   def audit_line(line, lineno)
@@ -490,7 +542,7 @@ class FormulaAuditor
     if line =~ /# if this fails, try separate make\/make install steps/
       problem "Please remove default template comments"
     end
-    if line =~ /# The url of the archive/
+    if line =~ /# The URL of the archive/
       problem "Please remove default template comments"
     end
     if line =~ /## Naming --/
@@ -666,11 +718,11 @@ class FormulaAuditor
       problem "Define method #{$1.inspect} in the class body, not at the top-level"
     end
 
-    if line =~ /ENV.fortran/ && !formula.requirements.map(&:class).include?(FortranDependency)
+    if line =~ /ENV.fortran/ && !formula.requirements.map(&:class).include?(FortranRequirement)
       problem "Use `depends_on :fortran` instead of `ENV.fortran`"
     end
 
-    if line =~ /JAVA_HOME/i && !formula.requirements.map(&:class).include?(JavaDependency)
+    if line =~ /JAVA_HOME/i && !formula.requirements.map(&:class).include?(JavaRequirement)
       problem "Use `depends_on :java` to set JAVA_HOME"
     end
 
@@ -827,7 +879,7 @@ class ResourceAuditor
     end
 
     if version.to_s =~ /_\d+$/
-      problem "version #{version} should not end with a underline and a number"
+      problem "version #{version} should not end with an underline and a number"
     end
   end
 
@@ -909,6 +961,11 @@ class ResourceAuditor
       problem "Please use \"http://ftpmirror.gnu.org\" instead of #{url}."
     end
 
+    # GNU's ftpmirror does NOT support SSL/TLS.
+    if url =~ %r[^https://ftpmirror\.gnu\.org/]
+      problem "Please use http:// for #{url}"
+    end
+
     if mirrors.include?(url)
       problem "URL should not be duplicated as a mirror: #{url}"
     end
@@ -918,9 +975,6 @@ class ResourceAuditor
     # Check a variety of SSL/TLS URLs that don't consistently auto-redirect
     # or are overly common errors that need to be reduced & fixed over time.
     urls.each do |p|
-      # Skip the main url link, as it can't be made SSL/TLS yet.
-      next if p =~ %r[/ftpmirror\.gnu\.org]
-
       case p
       when %r[^http://ftp\.gnu\.org/],
            %r[^http://[^/]*\.apache\.org/],
