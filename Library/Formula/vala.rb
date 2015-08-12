@@ -1,5 +1,3 @@
-require "formula"
-
 class Vala < Formula
   desc "Compiler for the GObject type system"
   homepage "https://live.gnome.org/Vala"
@@ -13,8 +11,8 @@ class Vala < Formula
   end
 
   devel do
-    url "https://download.gnome.org/sources/vala/0.29/vala-0.29.1.tar.xz"
-    sha256 "776b95c2cf29e20177bdfebdc05e0b665968a42313d8fd1961e5d5073a2600e9"
+    url "https://download.gnome.org/sources/vala/0.29/vala-0.29.2.tar.xz"
+    sha256 "e4ef92b3b55a4dcaeb13a2cf673924234fb6330033b1b4906e125735fa41d1ba"
   end
 
   depends_on "pkg-config" => :run
@@ -37,14 +35,14 @@ class Vala < Formula
         print ("#{test_string}");
       }
     EOS
-    valac_args = [# Build with debugging symbols.
-                  "-g",
-                  # Use Homebrew's default C compiler.
-                  "--cc=#{ENV.cc}",
-                  # Save generated C source code.
-                  "--save-temps",
-                  # Vala source code path.
-                  "#{path}"]
+    valac_args = [ # Build with debugging symbols.
+      "-g",
+      # Use Homebrew's default C compiler.
+      "--cc=#{ENV.cc}",
+      # Save generated C source code.
+      "--save-temps",
+      # Vala source code path.
+      "#{path}"]
     system "#{bin}/valac", *valac_args
     assert File.exist?(testpath/"hello.c")
 
