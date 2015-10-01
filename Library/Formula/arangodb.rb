@@ -1,21 +1,20 @@
-require 'formula'
-
 class Arangodb < Formula
   desc "Universal open-source database with a flexible data model"
-  homepage 'https://www.arangodb.com/'
-  url 'https://www.arangodb.com/repositories/Source/ArangoDB-2.5.5.tar.gz'
-  sha1 'e8ca48870222f68189881eb09b431cce02bfb7d8'
+  homepage "https://www.arangodb.com/"
+  url "https://www.arangodb.com/repositories/Source/ArangoDB-2.6.8.tar.gz"
+  sha256 "5d6f7b5a8c94a3ccf645c03dea37f8d4c28bfd3f6ab1a418365bdc4e162630f1"
 
-  head "https://github.com/arangodb/arangodb.git", :branch => 'unstable'
+  head "https://github.com/arangodb/arangodb.git", :branch => "unstable"
 
   bottle do
-    sha256 "e1b8492d5bb327eebd5d046c35889e0ec2d7e01e56965585cf91fa1d065feaee" => :yosemite
-    sha256 "e94bf46aecaf70ea4a114a2974c6d5df6cb5a1fec9a585a56829ec69fc9fb58b" => :mavericks
-    sha256 "de8f83b412fd3edbf5dc3449920ee309bfc171b950cff1b9a9692564a4082e43" => :mountain_lion
+    sha256 "0a24c5738112be6e5715ad6f1a8a4099a43dedfad2cb8a3a4ce49498ae503a0d" => :el_capitan
+    sha256 "64c3bee72c275937d6c5f24f278d2f0eaf42eeb01ccb42c0de30b2fa656f1ddb" => :yosemite
+    sha256 "ab27ada15dc3ee1c0e0ff534c03d944fa1e436fa65786dd5da1b7b14056fc880" => :mavericks
+    sha256 "8633947964bbe2b281f6c13d7c864661c1de73b70a796ea96645e86b18198e2d" => :mountain_lion
   end
 
-  depends_on 'go' => :build
-  depends_on 'openssl'
+  depends_on "go" => :build
+  depends_on "openssl"
 
   needs :cxx11
 
@@ -34,20 +33,20 @@ class Arangodb < Formula
       --localstatedir=#{var}
     ]
 
-    args << "--program-suffix=unstable" if build.head?
+    args << "--program-suffix=-unstable" if build.head?
 
     system "./configure", *args
-    system "make install"
+    system "make", "install"
 
-    (var/'arangodb').mkpath
-    (var/'log/arangodb').mkpath
+    (var/"arangodb").mkpath
+    (var/"log/arangodb").mkpath
   end
 
   def post_install
-    system "#{sbin}/arangod", "--upgrade", "--log.file", "-"
+    system "#{sbin}/arangod" + (build.head? ? "-unstable" : ""), "--upgrade", "--log.file", "-"
   end
 
-  plist_options :manual => "#{HOMEBREW_PREFIX}/opt/arangodb/sbin/arangod --log.file -"
+  plist_options :manual => "#{HOMEBREW_PREFIX}/opt/arangodb/sbin/arangod" + (build.head? ? "-unstable" : "") + " --log.file -"
 
   def plist; <<-EOS.undent
     <?xml version="1.0" encoding="UTF-8"?>

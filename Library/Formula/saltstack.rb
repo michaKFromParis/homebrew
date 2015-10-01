@@ -1,14 +1,19 @@
 class Saltstack < Formula
   desc "Dynamic infrastructure communication bus"
   homepage "http://www.saltstack.org"
-  url "https://github.com/saltstack/salt/archive/v2015.5.0.tar.gz"
-  sha256 "278142ffd4d6ec693a7d160c27d360e9fdce6ae9c7de40e3cb18805078488b71"
+  # please use sdists published as release downloads
+  # (URLs starting with https://github.com/saltstack/salt/releases/download)
+  # github tag archives will report wrong version number
+  # https://github.com/Homebrew/homebrew/issues/43493
+  url "https://github.com/saltstack/salt/releases/download/v2015.8.0/salt-2015.8.0.tar.gz"
+  sha256 "71e1cb2eb1d4b30f3247f5590c00a2089190b8f9a90c9330dc9a65fae517ec9b"
   head "https://github.com/saltstack/salt.git", :branch => "develop", :shallow => false
 
   bottle do
-    sha256 "cf9d2aee286f69efcd838021b9e21fcb87189e4c4f1b32a01213ed63dd1154e4" => :yosemite
-    sha256 "84096f34d6f8940236594f8c08ac7fe344e5878026c829b96edc772d87b82e95" => :mavericks
-    sha256 "03493a5a2cb2e9e203691e1ff15473f7ddb718c9a6c12e386782b055ef68262d" => :mountain_lion
+    cellar :any
+    sha256 "77ee45a43b886a6f9e4744fabb03ec60ab4b3dfc9fcc99d1738894ea3d63158b" => :el_capitan
+    sha256 "eca29cf538c0fba986d2160f72f195f5bfce221ef5601f9bf584085107385d4a" => :yosemite
+    sha256 "c28dc5586b07390c04125d55547ef9f46516ac080fc66a5527440c111bab9cf6" => :mavericks
   end
 
   depends_on :python if MacOS.version <= :snow_leopard
@@ -27,16 +32,19 @@ class Saltstack < Formula
     sha256 "410ffa80ef5535244b500933d70c1b65206333b546ca5a6c89373afb65413795"
   end
 
-  # Don't depend on Homebrew's openssl due to upstream build issues with non-system OpenSSL in M2Crypto
-  # See: https://github.com/martinpaljak/M2Crypto/issues/11
   resource "m2crypto" do
     url "https://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-0.22.3.tar.gz"
     sha256 "6071bfc817d94723e9b458a010d565365104f84aa73f7fe11919871f7562ff72"
   end
 
   resource "requests" do
-    url "https://pypi.python.org/packages/source/r/requests/requests-2.6.0.tar.gz"
-    sha256 "1cdbed1f0e236f35ef54e919982c7a338e4fea3786310933d3a7887a04b74d75"
+    url "https://pypi.python.org/packages/source/r/requests/requests-2.7.0.tar.gz"
+    sha256 "398a3db6d61899d25fd4a06c6ca12051b0ce171d705decd7ed5511517b4bb93d"
+  end
+
+  resource "futures" do
+    url "https://pypi.python.org/packages/source/f/futures/futures-3.0.3.tar.gz"
+    sha256 "2fe2342bb4fe8b8e217f0d21b5921cbe5408bf966d9f92025e707e881b198bed"
   end
 
   resource "pycrypto" do
@@ -55,29 +63,24 @@ class Saltstack < Formula
   end
 
   resource "jinja2" do
-    url "https://pypi.python.org/packages/source/J/Jinja2/Jinja2-2.7.3.tar.gz"
-    sha256 "2e24ac5d004db5714976a04ac0e80c6df6e47e98c354cb2c0d82f8879d4f8fdb"
+    url "https://pypi.python.org/packages/source/J/Jinja2/Jinja2-2.8.tar.gz"
+    sha256 "bc1ff2ff88dbfacefde4ddde471d1417d3b304e8df103a7a9437d47269201bf4"
   end
 
   resource "pyzmq" do
-    url "https://pypi.python.org/packages/source/p/pyzmq/pyzmq-14.3.1.tar.gz"
-    sha256 "00e263c26a524f81127247e6f37cbf427eddf3a3657d170cf4865bd522df3914"
+    url "https://pypi.python.org/packages/source/p/pyzmq/pyzmq-14.7.0.tar.gz"
+    sha256 "77994f80360488e7153e64e5959dc5471531d1648e3a4bff14a714d074a38cc2"
   end
 
   resource "msgpack-python" do
-    url "https://pypi.python.org/packages/source/m/msgpack-python/msgpack-python-0.4.2.tar.gz"
-    sha256 "0476e8fdd79e5b648b349bd0edebf06e41271ee29421ef7adb12cdbe55dac2a9"
-  end
-
-  resource "apache-libcloud" do
-    url "https://pypi.python.org/packages/source/a/apache-libcloud/apache-libcloud-0.15.1.tar.gz"
-    sha256 "f12f80c2f66e46c406c53b90c41eb572c29751c407bdbe7204ec6d9264ce16bc"
+    url "https://pypi.python.org/packages/source/m/msgpack-python/msgpack-python-0.4.6.tar.gz"
+    sha256 "bfcc581c9dbbf07cc2f951baf30c3249a57e20dcbd60f7e6ffc43ab3cc614794"
   end
 
   # Required by tornado
   resource "certifi" do
-    url "https://pypi.python.org/packages/source/c/certifi/certifi-14.05.14.tar.gz"
-    sha256 "1e1bcbacd6357c151ae37cf0290dcc809721d32ce21fd6b7339568f3ddef1b69"
+    url "https://pypi.python.org/packages/source/c/certifi/certifi-2015.9.6.2.tar.gz"
+    sha256 "dc3a2b2d9d1033dbf27586366ae61b9d7c44d8c3a6f29694ffcbb0618ea7aea6"
   end
 
   # Required by tornado
@@ -87,8 +90,8 @@ class Saltstack < Formula
   end
 
   resource "tornado" do
-    url "https://pypi.python.org/packages/source/t/tornado/tornado-4.1.tar.gz"
-    sha256 "99abd3aede45c93739346ee7384e710120121c3744da155d5cff1c0101702228"
+    url "https://pypi.python.org/packages/source/t/tornado/tornado-4.2.1.tar.gz"
+    sha256 "a16fcdc4f76b184cb82f4f9eaeeacef6113b524b26a2cb331222e4a7fa6f2969"
   end
 
   def install
@@ -99,12 +102,10 @@ class Saltstack < Formula
     end
 
     ENV.prepend_path "PATH", buildpath/"swig/bin"
-
     ENV.prepend_create_path "PYTHONPATH", libexec/"vendor/lib/python2.7/site-packages"
 
-    rs = %w[requests pycrypto pyyaml markupsafe jinja2 pyzmq msgpack-python apache-libcloud]
-    rs += %w[certifi backports.ssl_match_hostname tornado] if build.head?
-
+    rs = %w[requests futures pycrypto pyyaml markupsafe jinja2 pyzmq msgpack-python]
+    rs += %w[certifi backports.ssl_match_hostname tornado]
     rs.each do |r|
       resource(r).stage do
         system "python", *Language::Python.setup_install_args(libexec/"vendor")
@@ -122,11 +123,23 @@ class Saltstack < Formula
     man1.install Dir["doc/man/*.1"]
     man7.install Dir["doc/man/*.7"]
 
+    # Install sample configuration files
+    (etc/"saltstack").install Dir["conf/*"]
+
     bin.install Dir["#{libexec}/bin/*"]
     bin.env_script_all_files(libexec+"bin", :PYTHONPATH => ENV["PYTHONPATH"])
   end
 
+  def caveats; <<-EOS.undent
+    Sample configuration files have been placed in #{etc}/saltstack.
+    Saltstack will not use these by default.
+    EOS
+  end
+
   test do
+    ENV.prepend_path "PYTHONPATH", libexec/"vendor/lib/python2.7/site-packages"
+    system "python", "-c", "import M2Crypto"
+
     system "#{bin}/salt", "--version"
   end
 end

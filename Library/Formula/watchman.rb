@@ -1,16 +1,14 @@
-require "formula"
-
 class Watchman < Formula
   desc "Watch files and take action when they change"
   homepage "https://github.com/facebook/watchman"
+  url "https://github.com/facebook/watchman/archive/v3.8.0.tar.gz"
+  sha256 "10d1e134e6ff110044629a517e7c69050fb9e4a26f21079b267989119987b40d"
   head "https://github.com/facebook/watchman.git"
-  url "https://github.com/facebook/watchman/archive/v3.2.0.tar.gz"
-  sha1 "b7313c240e4977ee6ea8906bdca9680db34df2e9"
 
   bottle do
-    sha256 "89671e8b820786af65fb3cb159034636230f7cf89ca934871df4a2adb595df9d" => :yosemite
-    sha256 "a6f245862f48b38010e1a22f1659468466f5b9bbff4a77db25faeba9c76cf4e3" => :mavericks
-    sha256 "73f54fc034ec6be43dab94e3911fa179925a56e9c96dd53feb047400e99053b3" => :mountain_lion
+    sha256 "ddb382dd43017beb04ad421d3b9c31b47e85206875ee01ed1f148b01949a7834" => :el_capitan
+    sha256 "b8a0bd731de9802add0de92f8cf148ae816378e32df51398d688348c72458742" => :yosemite
+    sha256 "31cab2af477fd9b3a326d8bf620ddb87aafb1bc6654db130e5ca22f16ac7f27a" => :mavericks
   end
 
   depends_on "autoconf" => :build
@@ -24,16 +22,13 @@ class Watchman < Formula
                           "--prefix=#{prefix}",
                           "--with-pcre"
     system "make"
-    system "make install"
+    system "make", "install"
   end
 
   test do
-    system "#{bin}/watchman", "shutdown-server"
-    system "#{bin}/watchman", "watch", testpath
-    list = `#{bin}/watchman watch-list`
-    if list.index(testpath) === nil then
-      raise "failed to watch tmpdir"
+    list = shell_output("#{bin}/watchman -v")
+    if list.index(version).nil?
+      raise "expected to see #{version} in the version output"
     end
-    system "#{bin}/watchman", "watch-del", testpath
   end
 end

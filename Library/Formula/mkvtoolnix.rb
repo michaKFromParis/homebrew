@@ -1,13 +1,14 @@
 class Mkvtoolnix < Formula
   desc "Matroska media files manipulation tools"
   homepage "https://www.bunkus.org/videotools/mkvtoolnix/"
-  url "https://www.bunkus.org/videotools/mkvtoolnix/sources/mkvtoolnix-8.0.0.tar.xz"
-  sha256 "2eb8984b316463995bbe83f7df80e26d594da7eb35a2c28d83559bf1942535aa"
+  url "https://www.bunkus.org/videotools/mkvtoolnix/sources/mkvtoolnix-8.3.0.tar.xz"
+  sha256 "87bd82222995d35c310a426ed43e0b27cbfefa0caadcbcca8296787314affc37"
 
   bottle do
-    sha256 "e53da9dfaafc0ae9d42b2a60a72ef015aa5d0f3d9f2c29ff7a3fb64b3ea4c0e4" => :yosemite
-    sha256 "53085a65a6e26e3376a744c46ac02dcd2fd0f8479f4be332e323560a778542b0" => :mavericks
-    sha256 "fc9ea04dc9a55d1941a70a508710e5f5787814bd37efb5462fad170e2d94e044" => :mountain_lion
+    sha256 "aecb8a6f69196bba6652471de7a8622bbe60c51ec4faa300d1db1fcc05cfdc1b" => :el_capitan
+    sha256 "b6b99fa602b0b97c381a1f81196d549b47d23877c18a818e97dc8b061f06f88e" => :yosemite
+    sha256 "86e1a1d7e19ce84581f1c2cccac4416f0fbbd6542457337f9f080d9071cd56f0" => :mavericks
+    sha256 "e77f4ffed2854bf9c2d5c7c2eb2352e3f6062833ec872888929c9901539a05be" => :mountain_lion
   end
 
   head do
@@ -21,7 +22,7 @@ class Mkvtoolnix < Formula
   option "with-qt5", "Build with QT GUI"
 
   depends_on "pkg-config" => :build
-  depends_on :ruby => "1.9"
+  depends_on :ruby => ["1.9", :build]
   depends_on "libogg"
   depends_on "libvorbis"
   depends_on "flac" => :recommended
@@ -30,6 +31,7 @@ class Mkvtoolnix < Formula
   depends_on "wxmac" => :optional
   depends_on "qt5" => :optional
   depends_on "gettext" => :optional
+
   # On Mavericks, the bottle (without c++11) can be used
   # because mkvtoolnix is linked against libc++ by default
   if MacOS.version >= "10.9"

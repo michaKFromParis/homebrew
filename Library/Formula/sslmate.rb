@@ -1,14 +1,14 @@
 class Sslmate < Formula
   desc "Buy SSL certs from the command-line"
   homepage "https://sslmate.com"
-  url "https://packages.sslmate.com/other/sslmate-1.3.0.tar.gz"
-  sha256 "f56899e3b8e26d003604dde0e003fef7d99477ce3e4977f26fce3f9da8c7ad42"
+  url "https://packages.sslmate.com/other/sslmate-1.5.0.tar.gz"
+  sha256 "8ff98393de04d18b1b0b36dec3dd9adb48ba253278431d4de48a70ce9b9fadef"
 
   bottle do
-    cellar :any
-    sha256 "a9c34ea49ff27048656b29c8e46df8a3422a17fb7e2e5da7b0b6006818e23c77" => :yosemite
-    sha256 "e8645789874998a99bb8acc68d79dcc948ba70df0390efbf4946299a4456f316" => :mavericks
-    sha256 "5854e0280c1fa844ef7afe8bff7d09a5eeded38cf9fcc2c44df467206fea4c5f" => :mountain_lion
+    cellar :any_skip_relocation
+    sha256 "6f54f953b408f8e7b8bed0f90e999da84291d96a506053a9c0c59c30d3141611" => :el_capitan
+    sha256 "e60172537a652a4f4e1075c84a0a5663089f1f00ae469e222122588865038fa4" => :yosemite
+    sha256 "ae11a4cf8d04e4ecf85440ea0c006ab2db9394f52825082bcb021d05496e1ce7" => :mavericks
   end
 
   option "without-route53", "Disable support for Route 53 DNS approval"

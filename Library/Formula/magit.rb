@@ -1,73 +1,53 @@
 class Magit < Formula
   desc "Emacs interface for Git"
   homepage "https://github.com/magit/magit"
+  url "https://github.com/magit/magit/releases/download/2.2.2/magit-2.2.2.tar.gz"
+  sha256 "08e61898e23dbeb3a152d82e58fc9f6c769fe36d35d87617dcd1e69b2f91b3c6"
 
-  stable do
-    url "https://github.com/magit/magit/archive/1.4.2.tar.gz"
-    sha256 "460040e32a47a04222ea3bc3f78434308d8b0c6e82b03bfe3e6579068c54a2ab"
-
-    depends_on :emacs => "23.2"
-
-    resource "git-commit-mode" do
-      url "https://github.com/magit/git-modes/raw/3423997a89f63eb4c8a4ce495928bc5951767932/git-commit-mode.el"
-      sha256 "ed33f324e46ab81232bed5c38c4f8f794bd689f58aa49e98e386b628182b32e0"
-    end
-
-    resource "git-rebase-mode" do
-      url "https://github.com/magit/git-modes/raw/3423997a89f63eb4c8a4ce495928bc5951767932/git-rebase-mode.el"
-      sha256 "21670e2dcabadc18f2c2caff9b97d7affe1697a64d522a40fce6d8f1f5cd5ea5"
-    end
-  end
-
-  head do
-    url "https://github.com/magit/magit.git", :branch => "next"
-
-    depends_on :emacs => "24.4"
-
-    resource "dash" do
-      url "http://melpa.org/packages/dash-20150611.922.el"
-      sha256 "9a4de6d5adf5a976c4bca3d6c8ac653ba8c859b23e01b4e38e27820104c43043"
-    end
-  end
+  head "https://github.com/magit/magit.git", :shallow => false
 
   bottle do
     cellar :any
-    sha256 "cfbba4c7e7332fba7b60cf9484ae7979cf08e8d625545f924ececbeaa12418f6" => :yosemite
-    sha256 "1ac752b649d17f26ff5ddf965d7125895455aeb069267295a4966528be5b9764" => :mavericks
-    sha256 "c528977bcfef51e5a93e52b68ece520973be1aaa0d8a44f5adda7c99bcfc87b0" => :mountain_lion
+    sha256 "048842721bb6f95aebd3ad00a81d5d62c87e8803252e4152e66652deeca6773f" => :yosemite
+    sha256 "37969f18c4d5fa5c485670ffa27af504f38505f369447dc778771cc771ad61cb" => :mavericks
+    sha256 "566bc0c62bf9633e7c8010877c2e884eacca730a0d3e626c2c22f0f964e09ca8" => :mountain_lion
+  end
+
+  depends_on :emacs => "24.4"
+
+  resource "dash" do
+    url "https://github.com/magnars/dash.el/archive/2.11.0.tar.gz"
+    sha256 "d888d34b9b86337c5740250f202e7f2efc3bf059b08a817a978bf54923673cde"
+  end
+
+  resource "async" do
+    url "https://github.com/jwiegley/emacs-async/archive/v1.4.tar.gz"
+    sha256 "295d6d5dd759709ef714a7d05c54aa2934f2ffb4bb2e90e4434415f75f05473b"
   end
 
   def install
-    if build.stable?
-      buildpath.install resource("git-commit-mode"),
-                        resource("git-rebase-mode")
-      system "make", "install", "PREFIX=#{prefix}"
-      (share/"emacs/site-lisp").install "git-commit-mode.el",
-                                        "git-rebase-mode.el"
-    else
-      # Can't run `make install` alone without ENV.j1:
-      # https://github.com/magit/magit/issues/1670
-      system "make"
-      system "make", "install", "PREFIX=#{prefix}"
-      resource("dash").stage do
-        (share/"emacs/site-lisp").install "dash-20150611.922.el" => "dash.el"
-      end
-    end
-  end
+    resource("dash").stage { (share/"emacs/site-lisp/magit").install "dash.el" }
+    resource("async").stage { (share/"emacs/site-lisp/magit").install Dir["*.el"] }
 
-  def caveats; <<-EOS.undent
-    Add the following to your Emacs init file to allow loading of packages installed by Homebrew:
+    (buildpath/"config.mk").write <<-EOS
+      LOAD_PATH = -L #{buildpath}/lisp -L #{share}/emacs/site-lisp/magit
+    EOS
 
-    (add-to-list 'load-path "#{HOMEBREW_PREFIX}/share/emacs/site-lisp")
-  EOS
+    args = %W[
+      PREFIX=#{prefix}
+      docdir=#{doc}
+      VERSION=#{version}
+    ]
+    system "make", "install", *args
   end
 
   test do
     (testpath/"test.el").write <<-EOS.undent
-      (add-to-list 'load-path "#{share}/emacs/site-lisp")
-      (require 'magit)
-      (print (minibuffer-prompt-width))
+      (add-to-list 'load-path "#{share}/emacs/site-lisp/magit")
+      (load "magit")
+      (magit-run-git "init")
     EOS
-    assert_equal "0", shell_output("emacs -batch -l #{testpath}/test.el").strip
+    system "emacs", "--batch", "-Q", "-l", "#{testpath}/test.el"
+    File.exist? ".git"
   end
 end

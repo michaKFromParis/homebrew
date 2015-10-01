@@ -3,14 +3,15 @@
 class Mercurial < Formula
   desc "Scalable distributed version control system"
   homepage "https://mercurial.selenic.com/"
-  url "https://mercurial.selenic.com/release/mercurial-3.4.1.tar.gz"
-  sha256 "7a8acf7329beda38ceea29c689212574d9a6bfffe24cf565015ea0066f7cee3f"
+  url "https://mercurial.selenic.com/release/mercurial-3.5.1.tar.gz"
+  sha256 "997da45da303e399678c5bccd7be39b0fabf29c7e02fd3c8751c2ff88c8a259d"
 
   bottle do
     cellar :any
-    sha256 "f038a255e43c177ae362f319d0cef3e42c1bf631418de78ee13165dc48d2b9ba" => :yosemite
-    sha256 "b9408e88838e05d57720735b95c8dc00efbf81f655846b29fb363895580a1daa" => :mavericks
-    sha256 "a0b7d3f952aae73b8b02aff8c82c41af458babddf9c1e01118676ec1139a734b" => :mountain_lion
+    sha256 "8e22f11ff1c147a368581a424c0ec1f1b11959440f881597e84fcc031743ade0" => :el_capitan
+    sha256 "c63ca0b939da4959f2623cac739876f3285683e92366f48a63371483254a6407" => :yosemite
+    sha256 "f1c4e9ebbb056b50a584b760569de5cacdafbd728dd821e00297380ee5095904" => :mavericks
+    sha256 "d39399222a31f040a5e22ef5853a9f99a476c1d76da85935710fdd80980d9ed5" => :mountain_lion
   end
 
   def install

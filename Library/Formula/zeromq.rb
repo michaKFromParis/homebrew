@@ -1,12 +1,15 @@
 class Zeromq < Formula
   desc "High-performance, asynchronous messaging library"
   homepage "http://www.zeromq.org/"
+  url "http://download.zeromq.org/zeromq-4.1.3.tar.gz"
+  sha256 "61b31c830db377777e417235a24d3660a4bcc3f40d303ee58df082fcd68bf411"
 
   bottle do
     cellar :any
-    sha256 "35959e6b6e357d80c35529f410a7429cb53ed0d79d56762c8719ce822dab8431" => :yosemite
-    sha256 "54649139f4cdd17a5780335eda37286feecfed5b5682fd15782b9e4895d14380" => :mavericks
-    sha256 "78951bbe1bb821bdc758ba28ec3220acc6ea85b228250c348120760f7cc45841" => :mountain_lion
+    sha256 "211b240bd27b667ca448ab39fed796051245dc31598395b591e499bcd3324428" => :el_capitan
+    sha256 "d106684f5d747593e8d9e5291111d7927500a0635bbe6597820ace95f5909dd1" => :yosemite
+    sha256 "e223757f0d42f9ccaa332f4d4610b79dd98e0690d17793ed810010ba16c8e503" => :mavericks
+    sha256 "dcc14260a68e6a117500cfe9208b764f8f488aa81280f628cf3e31e4f0b8502f" => :mountain_lion
   end
 
   head do
@@ -17,19 +20,16 @@ class Zeromq < Formula
     depends_on "libtool" => :build
   end
 
-  stable do
-    url "http://download.zeromq.org/zeromq-4.1.2.tar.gz"
-    sha1 "86c17096f7f4bf46cbcd2ad242cf8fec8a7cfb7b"
-  end
-
   option :universal
   option "with-libpgm", "Build with PGM extension"
+  option "with-norm", "Build with NORM extension"
 
   deprecated_option "with-pgm" => "with-libpgm"
 
   depends_on "pkg-config" => :build
   depends_on "libpgm" => :optional
   depends_on "libsodium" => :optional
+  depends_on "norm" => :optional
 
   def install
     ENV.universal_binary if build.universal?
@@ -37,9 +37,9 @@ class Zeromq < Formula
     args = ["--disable-dependency-tracking", "--prefix=#{prefix}"]
     if build.with? "libpgm"
       # Use HB libpgm-5.2 because their internal 5.1 is b0rked.
-      ENV['OpenPGM_CFLAGS'] = %x[pkg-config --cflags openpgm-5.2].chomp
-      ENV['OpenPGM_LIBS'] = %x[pkg-config --libs openpgm-5.2].chomp
-      args << "--with-system-pgm"
+      ENV["pgm_CFLAGS"] = `pkg-config --cflags openpgm-5.2`.chomp
+      ENV["pgm_LIBS"] = `pkg-config --libs openpgm-5.2`.chomp
+      args << "--with-pgm"
     end
 
     if build.with? "libsodium"
@@ -47,6 +47,8 @@ class Zeromq < Formula
     else
       args << "--without-libsodium"
     end
+
+    args << "--with-norm" if build.with? "norm"
 
     system "./autogen.sh" if build.head?
     system "./configure", *args

@@ -1,17 +1,16 @@
-require "formula"
 require "language/go"
 
 class Glide < Formula
   desc "Simplified Go project management, dependency management, and vendoring"
   homepage "https://github.com/Masterminds/glide"
-  url "https://github.com/Masterminds/glide/archive/0.3.0.tar.gz"
-  sha1 "60fb5978446bae925158b594dbf2e15546fd3168"
+  url "https://github.com/Masterminds/glide/archive/0.6.1.tar.gz"
+  sha256 "41e36010ab6255782699f3239e7b5254597d692c0740443cd853b895174f6d6c"
 
   bottle do
-    cellar :any
-    sha256 "7c4c13ddcf1c045816b74fa3b00ca21ea451adcf6508d6e7984d61e7f90f86bf" => :yosemite
-    sha256 "f92d3a48b8283f204455c217aae38a42f36503ca85c728d576dcc267a62a0aba" => :mavericks
-    sha256 "0a48ea01a1fd5f4c6f24dc90588edf82200d4c7833befe20a321950426bd7442" => :mountain_lion
+    cellar :any_skip_relocation
+    sha256 "96c5f9193b5df54583b28de56ea3022d219b368d8194fc6c84ce3ce270880377" => :el_capitan
+    sha256 "1b77586f91d3da1cdc06c9ee0c096b721a670385b8fceeb85123de4f5f307e60" => :yosemite
+    sha256 "615e73ec5290a044bd581ef068c3ff75aefcff8359456b6848beb2ebe8ab65fc" => :mavericks
   end
 
   depends_on "go" => :build
@@ -23,26 +22,31 @@ class Glide < Formula
 
   go_resource "github.com/Masterminds/cookoo" do
     url "https://github.com/Masterminds/cookoo.git",
-      :revision => "623f8762b2474f1ad6c2cac6bf331b8871591379"
+      :revision => "043bf3d5fe7ee75f4831986ce3e2108d24fbeda4"
+  end
+
+  go_resource "github.com/Masterminds/vcs" do
+    url "https://github.com/Masterminds/vcs.git",
+      :revision => "3bfb48bfa985c381d8bfd9ab8885e7d1f017b64a"
   end
 
   go_resource "github.com/codegangsta/cli" do
     url "https://github.com/codegangsta/cli.git",
-      :revision => "7ad88c27405eca0bb4a04bb45897fb7985bd1217"
+      :revision => "a65b733b303f0055f8d324d805f393cd3e7a7904"
   end
 
   def install
-    (buildpath + "src/github.com/Masterminds/glide").install "glide.go", "cmd"
+    (buildpath + "src/github.com/Masterminds/glide").install "glide.go", "cmd", "gb"
 
     ENV["GOPATH"] = buildpath
     Language::Go.stage_deps resources, buildpath/"src"
 
-    system "go", "build", "-o", "glide", "-ldflags", "-X main.version 0.3.0", "#{buildpath}/src/github.com/Masterminds/glide/glide.go"
+    system "go", "build", "-o", "glide", "-ldflags", "-X main.version 0.6.1", "#{buildpath}/src/github.com/Masterminds/glide/glide.go"
     bin.install "glide"
   end
 
   test do
     version = pipe_output("#{bin}/glide --version")
-    assert_match /0.3.0/, version
+    assert_match /0.6.1/, version
   end
 end

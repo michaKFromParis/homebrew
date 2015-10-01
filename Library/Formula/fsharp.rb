@@ -1,15 +1,15 @@
-require "formula"
-
 class Fsharp < Formula
   desc "F#, a functional-first programming language"
   homepage "http://fsharp.org/"
-  url "https://github.com/fsharp/fsharp.git", :tag => "3.1.1.32",
-    :revision => "a4e1f7111a6d1410df3f33e7205ee34617006b94"
+  url "https://github.com/fsharp/fsharp.git", :tag => "3.1.2.4",
+                                              :revision => "8d02a54a75de362d6b649dcaaacfefe6db9caf41"
 
   bottle do
-    sha256 "10e035403f71f47b03e0961f5dc83959b5e2d8600a9af670e559bba811173ae9" => :yosemite
-    sha256 "e19150b83bf8fcc3a21f2ea81e2267441fbf17a6673375a89d7301fd4e1c2ced" => :mavericks
-    sha256 "d9940047cae32d7d6e3e65374f8db5cca452e322136a8b917f5627f5e5c7bd55" => :mountain_lion
+    cellar :any_skip_relocation
+    revision 1
+    sha256 "97589b3e7d5ffa745bca99bd9af8b22bc235201533b4a0eaf837735d58ef322b" => :el_capitan
+    sha256 "dcbb1135359e72ffdb76ce40a5b75bcea3e78083f56eb01c56186d007f37a3ce" => :yosemite
+    sha256 "3d2ccce2f75a68cef19427407b4dc4bb4865bcfe1e7843810013f6fea07728a7" => :mavericks
   end
 
   depends_on "automake" => :build
@@ -25,10 +25,9 @@ class Fsharp < Formula
 
   def post_install
     mono_ver = Formula["mono"].version
-    %w|3.0 3.1|.each do |fsharp_ver|
-      %w|Microsoft.Portable.FSharp.Targets
-         Microsoft.FSharp.Targets|.each do |fsharp_targ|
-
+    %w[3.0 3.1].each do |fsharp_ver|
+      %w[Microsoft.Portable.FSharp.Targets
+         Microsoft.FSharp.Targets].each do |fsharp_targ|
         tree_dir   = "lib/mono/Microsoft\ SDKs/F\#/#{fsharp_ver}/Framework/v4.0"
         source_dir = File.expand_path "#{prefix}/../../mono/#{mono_ver}/#{tree_dir}"
 
@@ -45,9 +44,9 @@ class Fsharp < Formula
   test do
     test_str = "Hello Homebrew"
     # fsharpi and fsharpc needs mono to be in the PATH
-    ENV.prepend_path 'PATH', Formula["mono"].bin
+    ENV.prepend_path "PATH", Formula["mono"].bin
 
-    output = shell_output %{echo 'printfn "#{test_str}"; exit 0' | #{bin}/fsharpi}
+    output = shell_output %(echo 'printfn "#{test_str}"; exit 0' | #{bin}/fsharpi)
     assert output.include? test_str
 
     hello = (testpath/"hello.fs")

@@ -1,14 +1,15 @@
 class Gitbucket < Formula
   desc "GitHub clone"
   homepage "https://github.com/takezoe/gitbucket"
-  url "https://github.com/takezoe/gitbucket/releases/download/3.3/gitbucket.war"
-  sha256 "3a50d97ed8184acdee865dab5e7b4694145f723dee92683eaa08448339658ea4"
+  url "https://github.com/takezoe/gitbucket/releases/download/3.6/gitbucket.war"
+  sha256 "bec6de463157d679d3887b940642f8e51661c4b98289b42abce9b9115dc82d4e"
 
   bottle do
-    cellar :any
-    sha256 "e6c36e1cbadf79ba6ee7bf4d4e0686baa4ab8cd842b74743cc485336a1537944" => :yosemite
-    sha256 "a6f8da25fb5267ceabaa039986f2f8c0a19bde3b80cde3adf5e49fe68e32412f" => :mavericks
-    sha256 "10c67abed55b1dd97e0db921e0ed9dfa5d9cd4e5bfed98e542101686ba589685" => :mountain_lion
+    cellar :any_skip_relocation
+    sha256 "2976458b257fecd4d340c576c765a591d53b3c0a4b5fbe61ca1173d46a3210ce" => :el_capitan
+    sha256 "4c996c9acce91bcf66ad53ec2b1f2f323c094a6985451c6b22a13f94f189cdb3" => :yosemite
+    sha256 "7ab8add459500bba14c2d0f9a75622c395a62bfd46e3dc578199aa4e104c492d" => :mavericks
+    sha256 "ba77f720b0a392b498760c821a62cc0842d8d09cd2bb4bc7edee0587fc86dd5e" => :mountain_lion
   end
 
   head do

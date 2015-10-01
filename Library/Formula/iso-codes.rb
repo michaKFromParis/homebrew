@@ -1,16 +1,17 @@
 class IsoCodes < Formula
   desc "ISO language, territory, currency, script codes, and their translations"
   homepage "https://pkg-isocodes.alioth.debian.org/"
-  url "https://pkg-isocodes.alioth.debian.org/downloads/iso-codes-3.58.tar.xz"
-  sha256 "86af5735dce6e4eff2b983e5d8aa9a3dea1b8db702333ff20be89e45f7f35a72"
+  url "https://pkg-isocodes.alioth.debian.org/downloads/iso-codes-3.61.tar.xz"
+  sha256 "a79bf119afdc20feef12965f26f9d97868819003a76355a6f027a14a6539167d"
 
-  head "git://git.debian.org/git/iso-codes/iso-codes.git"
+  head "git://git.debian.org/git/iso-codes/iso-codes.git", :shallow => false
 
   bottle do
-    cellar :any
-    sha256 "4e4a5a8c8e9c823915d2548379dd9063aa9271045e8263dd4ff95c1b3f79c0e6" => :yosemite
-    sha256 "c8072dcdb49816cb0fab8261e8051718cb6cdab381dbe1713665773956e0bf4b" => :mavericks
-    sha256 "c26eb05aa26a4b5b66d83ccdc7c8f8558766e14890d390993868e7896b23a1e2" => :mountain_lion
+    cellar :any_skip_relocation
+    sha256 "443f678c1dec1caf6324f51fbe14aba98504b34d1207de8a86c75f4aceb00d22" => :el_capitan
+    sha256 "de96d8f33f363621e11c881f8f013a68bffbd58e0d0e9371eaa8f6f00c5b6c5f" => :yosemite
+    sha256 "d5a5beccd811923c51c655d9f3e9f3b1279340e4f67da87b8d0f334222e236a9" => :mavericks
+    sha256 "f0a590da2b2f1e86683b17ebc5cd419fe06110b90160adbcce3a551e0136a26e" => :mountain_lion
   end
 
   depends_on "gettext" => :build

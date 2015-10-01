@@ -1,14 +1,15 @@
 class Stunnel < Formula
   desc "SSL tunneling program"
   homepage "https://www.stunnel.org/"
-  url "https://www.stunnel.org/downloads/stunnel-5.18.tar.gz"
-  mirror "https://www.usenix.org.uk/mirrors/stunnel/stunnel-5.18.tar.gz"
-  sha256 "0532c0a2f8de3da1ab625e384146501ce5936fac63d01561c3a9bf652b692317"
+  url "https://www.stunnel.org/downloads/stunnel-5.23.tar.gz"
+  mirror "https://www.usenix.org.uk/mirrors/stunnel/stunnel-5.23.tar.gz"
+  sha256 "0fc4a702afd2e857bae8ad1f39c51546eb282c3d0ff4f4d55d62aece7328ddea"
 
   bottle do
-    sha256 "2e6964737b4922e1aa87c5762ccdfe7dfe29d78bc2e0715e714179f0a76aa8c9" => :yosemite
-    sha256 "d8fbd05f56f04febb16be5ab08ecf7742be148a3d1a904f91c821fa28a37b899" => :mavericks
-    sha256 "859022f3d210ef9eeaf18b3000c6127880364c03b53db4b18b4f100e2c462d9a" => :mountain_lion
+    sha256 "a7c7556a6c17c2b5b131dcc8e5a66e3d7a7fdd5690bab34a009f359ffe59b9a2" => :el_capitan
+    sha256 "754cd51e26be1d898e0bfe861baef5eae6ad20c735f5b32356c0c95467b90dd0" => :yosemite
+    sha256 "fc4267fd40c4cae2f08283dd126a8c4daee78405b7574f196771fe0acfbcfccd" => :mavericks
+    sha256 "44c0bdbc5102a1259d4f4617d5a2c8b5c1043a0d4e32c2a1fc4767b09674c5cb" => :mountain_lion
   end
 
   # Please revision me whenever OpenSSL is updated
@@ -16,41 +17,6 @@ class Stunnel < Formula
   depends_on "openssl"
 
   def install
-    # This causes a bogus .pem to be created in lieu of interactive cert generation.
-    stunnel_cnf = Pathname.new("tools/stunnel.cnf")
-    stunnel_cnf.unlink
-    stunnel_cnf.write <<-EOS.undent
-      # OpenSSL configuration file to create a server certificate
-      # by Michal Trojnara 1998-2015
-
-      [ req ]
-      # the default key length is secure and quite fast - do not change it
-      default_bits                    = 2048
-      # comment out the next line to protect the private key with a passphrase
-      encrypt_key                     = no
-      distinguished_name              = req_dn
-      x509_extensions                 = cert_type
-      prompt                          = no
-
-      [ req_dn ]
-      countryName                     = PL
-      stateOrProvinceName             = Mazovia Province
-      localityName                    = Warsaw
-      organizationName                = Stunnel Developers
-      organizationalUnitName          = Provisional CA
-      0.commonName                    = localhost
-
-      # To create a certificate for more than one name uncomment:
-      # 1.commonName                  = DNS alias of your server
-      # 2.commonName                  = DNS alias of your server
-      # ...
-      # See https://web.archive.org/web/20020207210031/http://home.netscape.com/eng/security/ssl_2.0_certificate.html
-      # to see how Netscape understands commonName.
-
-      [ cert_type ]
-      nsCertType                      = server
-    EOS
-
     system "./configure", "--disable-dependency-tracking",
                           "--disable-silent-rules",
                           "--prefix=#{prefix}",
@@ -60,7 +26,19 @@ class Stunnel < Formula
                           "--disable-libwrap",
                           "--disable-systemd",
                           "--with-ssl=#{Formula["openssl"].opt_prefix}"
-    system "make", "install", "cert"
+    system "make", "install"
+
+    # This programmatically recreates pem creation used in the tools Makefile
+    # which would usually require interactivity to resolve.
+    cd "tools" do
+      args = %w[req -new -x509 -days 365 -rand stunnel.rnd -config
+                openssl.cnf -out stunnel.pem -keyout stunnel.pem -sha256 -subj
+                /C=PL/ST=Mazovia\ Province/L=Warsaw/O=Stunnel\ Developers/OU=Provisional\ CA/CN=localhost/]
+      system "dd", "if=/dev/urandom", "of=stunnel.rnd", "bs=256", "count=1"
+      system "#{Formula["openssl"].opt_bin}/openssl", *args
+      chmod 0600, "stunnel.pem"
+      (etc/"stunnel").install "stunnel.pem"
+    end
   end
 
   def caveats
