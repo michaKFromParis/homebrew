@@ -3,21 +3,20 @@ class Postgresql < Formula
   homepage "https://www.postgresql.org/"
 
   stable do
-    url "https://ftp.postgresql.org/pub/source/v9.4.4/postgresql-9.4.4.tar.bz2"
-    sha256 "538ed99688d6fdbec6fd166d1779cf4588bf2f16c52304e5ef29f904c43b0013"
+    url "https://ftp.postgresql.org/pub/source/v9.4.5/postgresql-9.4.5.tar.bz2"
+    sha256 "b87c50c66b6ea42a9712b5f6284794fabad0616e6ae420cf0f10523be6d94a39"
   end
 
   devel do
-    url "https://ftp.postgresql.org/pub/source/v9.5alpha2/postgresql-9.5alpha2.tar.bz2"
-    sha256 "87a55f39fb465ffe47701251665d3bff431760d9941f884be7f5ff67435ba485"
-    version "9.5alpha2"
+    url "https://ftp.postgresql.org/pub/source/v9.5beta1/postgresql-9.5beta1.tar.bz2"
+    sha256 "b53199e2667982de2039ad7e30467f67c5d7af678e69d6211de8ba1cac75c9f0"
+    version "9.5beta1"
   end
 
   bottle do
-    sha256 "c300df1c732b749654f507498ae77531842dbb3bebc1083fe05cb191e5ee6bb3" => :el_capitan
-    sha256 "25c2e16deaf18141e48f7b567ef02f8c426cc4978a41e1ee0f7f2484d8ddf2c9" => :yosemite
-    sha256 "553b8e7f01b436a9152a737f66addbd7062bb90dc711e1e50a86a6dfa3f3a673" => :mavericks
-    sha256 "78638d3488658f86664b3b98ce78d127dedbe2273e50e2bd4ac7b0af550c20c8" => :mountain_lion
+    sha256 "57294da21442db822bf719143880000c9a90656188dcf580fafcb6b4e4350f9e" => :el_capitan
+    sha256 "02a136458ee09cc7fdb731c023948359dafa5665b56179744985864492adacd4" => :yosemite
+    sha256 "13f6fec00aa8b4938a2858bdcda390460d21bb71d16fc0827bf8446071c60f47" => :mavericks
   end
 
   option "32-bit"
@@ -44,6 +43,9 @@ class Postgresql < Formula
 
   def install
     ENV.libxml2 if MacOS.version >= :snow_leopard
+
+    ENV.prepend "LDFLAGS", "-L#{Formula["openssl"].opt_lib}"
+    ENV.prepend "CPPLAGS", "-I#{Formula["openssl"].opt_include}"
 
     args = %W[
       --disable-debug
