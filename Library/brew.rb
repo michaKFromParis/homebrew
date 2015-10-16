@@ -15,28 +15,40 @@ $:.unshift(HOMEBREW_LIBRARY_PATH.to_s)
 require "global"
 
 if ARGV.first == "--version"
-  puts HOMEBREW_VERSION
+  puts Homebrew.homebrew_version_string
   exit 0
 elsif ARGV.first == "-v"
-  puts "Homebrew #{HOMEBREW_VERSION}"
+  puts "Homebrew #{Homebrew.homebrew_version_string}"
   # Shift the -v to the end of the parameter list
   ARGV << ARGV.shift
   # If no other arguments, just quit here.
   exit 0 if ARGV.length == 1
 end
 
-# Check for bad xcode-select before anything else, because `doctor` and
-# many other things will hang
-# Note that this bug was fixed in 10.9
-if OS.mac? && MacOS.version < :mavericks && MacOS.active_developer_dir == "/"
-  odie <<-EOS.undent
-  Your xcode-select path is currently set to '/'.
-  This causes the `xcrun` tool to hang, and can render Homebrew unusable.
-  If you are using Xcode, you should:
-    sudo xcode-select -switch /Applications/Xcode.app
-  Otherwise, you should:
-    sudo rm -rf /usr/share/xcode-select
-  EOS
+if OS.mac?
+  # Check for bad xcode-select before other checks, because `doctor` and
+  # many other things will hang. Note that this bug was fixed in 10.9
+  if MacOS.version < :mavericks && MacOS.active_developer_dir == "/"
+    odie <<-EOS.undent
+      Your xcode-select path is currently set to '/'.
+      This causes the `xcrun` tool to hang, and can render Homebrew unusable.
+      If you are using Xcode, you should:
+        sudo xcode-select -switch /Applications/Xcode.app
+      Otherwise, you should:
+        sudo rm -rf /usr/share/xcode-select
+    EOS
+  end
+
+  # Check for user agreement of the Xcode license before permitting
+  # any other brew usage to continue. This prevents the situation where
+  # people are instructed to "please re-run as root via sudo" on brew commands.
+  # The check can only fail when Xcode is installed & the active developer dir.
+  if MacOS::Xcode.installed? && `/usr/bin/xcrun clang 2>&1` =~ /license/ && !$?.success?
+    odie <<-EOS.undent
+      You have not agreed to the Xcode license. Please resolve this by running:
+        sudo xcodebuild -license
+    EOS
+  end
 end
 
 case HOMEBREW_PREFIX.to_s
@@ -45,7 +57,7 @@ when "/", "/usr"
   abort "Cowardly refusing to continue at this prefix: #{HOMEBREW_PREFIX}"
 end
 
-if OS.mac? and MacOS.version < "10.6"
+if OS.mac? && MacOS.version < "10.6"
   abort <<-EOABORT.undent
     Homebrew requires Snow Leopard or higher. For Tiger and Leopard support, see:
     https://github.com/mistydemeo/tigerbrew
@@ -88,7 +100,7 @@ begin
   sudo_check = %w[ install link pin unpin upgrade ]
 
   if sudo_check.include? cmd
-    if Process.uid.zero? and not File.stat(HOMEBREW_BREW_FILE).uid.zero?
+    if Process.uid.zero? && !File.stat(HOMEBREW_BREW_FILE).uid.zero?
       raise <<-EOS.undent
         Cowardly refusing to `sudo brew #{cmd}`
         You can use brew with sudo, but only if the brew executable is owned by root.
@@ -106,7 +118,13 @@ begin
   # Add SCM wrappers.
   ENV["PATH"] += "#{File::PATH_SEPARATOR}#{HOMEBREW_LIBRARY}/ENV/scm"
 
-  internal_cmd = require? HOMEBREW_LIBRARY_PATH.join("cmd", cmd) if cmd
+  if cmd
+    internal_cmd = require? HOMEBREW_LIBRARY_PATH.join("cmd", cmd)
+
+    if !internal_cmd && ARGV.homebrew_developer?
+      internal_cmd = require? HOMEBREW_LIBRARY_PATH.join("dev-cmd", cmd)
+    end
+  end
 
   # Usage instructions should be displayed if and only if one of:
   # - a help flag is passed AND an internal command is matched

@@ -1,26 +1,28 @@
 class Planck < Formula
   desc "A command-line ClojureScript REPL for OS X."
   homepage "http://planck.fikesfarm.com/"
-  url "https://github.com/mfikes/planck/archive/1.4.tar.gz"
-  sha256 "57e4fdfb3dbb80b20aa71baa40ed03fe845a442d2ddd6ba9e942b4993ed13385"
+  head "https://github.com/mfikes/planck.git"
+  url "https://github.com/mfikes/planck/archive/1.7.tar.gz"
+  sha256 "11f5017519c3a10267465c73ef9da7c1f3c228cebed056b0ce7a8335e141aefc"
 
   bottle do
-    cellar :any
-    sha256 "e3924b3ec87a2c602aa694637e1cbb91ff6a3f64cd846fa98e00d2c81a9db088" => :yosemite
-    sha256 "d22e140fd5c76ead72472b3fa417cc4329ef9d8bee5c0bc118fd84890a05c1e0" => :mavericks
+    cellar :any_skip_relocation
+    sha256 "aded391f9335078e65849e09f052fa4d3684913f7b1d16813d4a663ea6572bef" => :el_capitan
+    sha256 "2d4781eff1bbd87bf1f5c2f636fdb14eba573f16fb22f8bc81a9a2d4bc7f8505" => :yosemite
+    sha256 "26a41703f91e22d7dd4954e4011f3da493dec0bb821c67fcb227df48da105753" => :mavericks
   end
 
   depends_on "leiningen" => :build
 
   depends_on :xcode => :build
-  depends_on :macos => :mavericks
+  depends_on :macos => :lion
 
   def install
-    system "./script/build"
+    system "./script/build-sandbox"
     bin.install "build/Release/planck"
   end
 
   test do
-    system "#{bin}/planck", "-e", "'(- 1 1)'"
+    system "#{bin}/planck", "-e", "(- 1 1)"
   end
 end

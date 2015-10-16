@@ -5,31 +5,31 @@ class Mongodb < Formula
   homepage "https://www.mongodb.org/"
 
   stable do
-    url "https://fastdl.mongodb.org/src/mongodb-src-r3.0.5.tar.gz"
-    sha256 "05b16a7991aa65b1d396a3dc622107fba3216fffa8b9ed0817e76ae95f5f7fdb"
+    url "https://fastdl.mongodb.org/src/mongodb-src-r3.0.7.tar.gz"
+    sha256 "2d25bae7c3bfb3c0e168fcad526dc212da72faaeae6d1573db631cacb172a7e7"
 
     go_resource "github.com/mongodb/mongo-tools" do
       url "https://github.com/mongodb/mongo-tools.git",
-        :tag => "r3.0.5",
-        :revision => "9da01528ee677e1790bb0b506c816ca9fbe0a6a8"
+        :tag => "r3.0.7",
+        :revision => "134c548992e8248c7a7c53777a652cbb2490ab6c"
     end
   end
 
   bottle do
-    cellar :any
-    sha256 "3a748f6609e1c83149b018592a7642729395a074034da924c68ad6d4c62e16ef" => :yosemite
-    sha256 "868bb486e1f3e2afae8791305c54061921d7760ab690c7980437bd24a40020da" => :mavericks
-    sha256 "a57923e2f82283476fb887c9a8b630436eeece36ff68de5e03538a9a2a696081" => :mountain_lion
+    cellar :any_skip_relocation
+    sha256 "a73192d68f1ba6ec903498237167fe483ac298572b319c5cfa63d5f3452dfffd" => :el_capitan
+    sha256 "bdbfc4de1d774e65242189c9bc47cb2591120a3220faca5761119166219c6dad" => :yosemite
+    sha256 "4f4b3c719811e978b4f1791b9d16c27b37e86e1be71a924629d5d386fbb19518" => :mavericks
   end
 
   devel do
-    url "https://fastdl.mongodb.org/src/mongodb-src-r3.1.6.tar.gz"
-    sha256 "de8591025f38bfdf5c8540e70a09a426d7e0b45a41b625d959598efd57dc20fb"
+    url "https://fastdl.mongodb.org/src/mongodb-src-r3.1.9.tar.gz"
+    sha256 "2caad29cfc94d029ba6af08f02158523863fb03f81094ff1a76789d70af31a86"
 
     go_resource "github.com/mongodb/mongo-tools" do
       url "https://github.com/mongodb/mongo-tools.git",
-        :tag => "r3.1.6",
-        :revision => "ec79a8183b012d3c55fc22fde298dd3032444b0b"
+        :tag => "r3.1.9",
+        :revision => "44b34407a8004b7801ae2bbdc664a8e54ea2a362"
     end
   end
 

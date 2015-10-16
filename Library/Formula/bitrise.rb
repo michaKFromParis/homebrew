@@ -3,26 +3,26 @@ require "language/go"
 class Bitrise < Formula
   desc "Command-line automation tool"
   homepage "https://github.com/bitrise-io/bitrise"
-  url "https://github.com/bitrise-io/bitrise/archive/0.9.7.tar.gz"
-  sha256 "cecd0cd112941c6b6f9d6cd334ea6a31aef1123af89e17c3950fbc8e8dbe5de2"
+  url "https://github.com/bitrise-io/bitrise/archive/1.2.2.tar.gz"
+  sha256 "728b6f7b3762d0dc38c8a6b6616e97934bfff1b218c63542bf67752994c8d40e"
 
   bottle do
-    cellar :any
-    sha256 "8d8cdcda113f12ab497db0700a04849143e733e2cf9c35c5e028b434f694d67c" => :yosemite
-    sha256 "9eb2435bdc04f4acaf975a5adf7bbbcced64c6ac60a678696919d67e59f04ef4" => :mavericks
-    sha256 "54e66ee1699983c1bb4a9662a8ff66a2e50aac85cd0eb0c613513b6cffa004b7" => :mountain_lion
+    cellar :any_skip_relocation
+    sha256 "1798f5fa4f5b5fbf6079b47623da47b2da7d04325e76c596a3efb37566b80610" => :el_capitan
+    sha256 "6afc0b96930d393afcadceb712465b153fffb703fa538d563d9019462b077497" => :yosemite
+    sha256 "e6d61ca437a7d2349205ef291704fc23eaaf3ec514c9dd8d26f08895d4000875" => :mavericks
   end
 
   depends_on "go" => :build
 
   resource "envman" do
-    url "https://github.com/bitrise-io/envman/archive/0.9.3.tar.gz"
-    sha256 "ff9cb03f978332499bad52f4930f736ded2f8573e8b713b5082f65432e618b8f"
+    url "https://github.com/bitrise-io/envman/archive/0.9.10.tar.gz"
+    sha256 "ca1912d53c495d1a5492c81df25591baae86126e6d9cf556f8d35f22a46ea95c"
   end
 
   resource "stepman" do
-    url "https://github.com/bitrise-io/stepman/archive/0.9.7.tar.gz"
-    sha256 "1eae33616e9c1c952f7c3cfc677fecc0cf0f0781a4aa2e686969e74485284c89"
+    url "https://github.com/bitrise-io/stepman/archive/0.9.17.tar.gz"
+    sha256 "d4eee2cc46f63f3c842d86d9c04f0de71541eaff45d817d16ffd116673383ee8"
   end
 
   def go_install_package(basepth, pkgname)
@@ -48,25 +48,19 @@ class Bitrise < Formula
 
   test do
     (testpath/"bitrise.yml").write <<-EOS.undent
-      format_version: 0.9.8
-      default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib
-      app:
-        envs: []
+      format_version: 1.1.0
+      default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
       workflows:
         test_wf:
-          title: Workflow for master branch
-          envs: []
           steps:
           - script:
-              title: Test
               inputs:
-              - content: |-
-                  #!/bin/bash
-                  set -e
-                  pwd
-                  printf 'Test - OK' > brew.test.file
+              - content: printf 'Test - OK' > brew.test.file
     EOS
 
+    # setup with --minimal flag, to skip the included `brew doctor` check
+    system "#{bin}/bitrise", "setup", "--minimal"
+    # run the defined test_wf workflow
     system "#{bin}/bitrise", "run", "test_wf"
     assert_equal "Test - OK", (testpath/"brew.test.file").read.chomp
   end

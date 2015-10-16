@@ -5,6 +5,7 @@ require "utils/json"
 require "utils/inreplace"
 require "utils/popen"
 require "utils/fork"
+require "utils/git"
 require "open-uri"
 
 class Tty
@@ -39,6 +40,10 @@ class Tty
 
     def gray
       bold 30
+    end
+
+    def highlight
+      bold 43
     end
 
     def width
@@ -80,6 +85,7 @@ def oh1(title)
   puts "#{Tty.green}==>#{Tty.white} #{title}#{Tty.reset}"
 end
 
+# Print a warning (do this rarely)
 def opoo(warning)
   $stderr.puts "#{Tty.yellow}Warning#{Tty.reset}: #{warning}"
 end
@@ -131,8 +137,7 @@ def interactive_shell(f = nil)
 end
 
 module Homebrew
-  def self.system(cmd, *args)
-    puts "#{cmd} #{args*" "}" if ARGV.verbose?
+  def self._system(cmd, *args)
     pid = fork do
       yield if block_given?
       args.collect!(&:to_s)
@@ -143,12 +148,43 @@ module Homebrew
     $?.success?
   end
 
+  def self.system(cmd, *args)
+    puts "#{cmd} #{args*" "}" if ARGV.verbose?
+    _system(cmd, *args)
+  end
+
+  def self.git_origin
+    return unless Utils.git_available?
+    HOMEBREW_REPOSITORY.cd { `git config --get remote.origin.url 2>/dev/null`.chuzzle }
+  end
+
   def self.git_head
+    return unless Utils.git_available?
     HOMEBREW_REPOSITORY.cd { `git rev-parse --verify -q HEAD 2>/dev/null`.chuzzle }
   end
 
+  def self.git_short_head
+    return unless Utils.git_available?
+    HOMEBREW_REPOSITORY.cd { `git rev-parse --short=4 --verify -q HEAD 2>/dev/null`.chuzzle }
+  end
+
   def self.git_last_commit
+    return unless Utils.git_available?
     HOMEBREW_REPOSITORY.cd { `git show -s --format="%cr" HEAD 2>/dev/null`.chuzzle }
+  end
+
+  def self.git_last_commit_date
+    return unless Utils.git_available?
+    HOMEBREW_REPOSITORY.cd { `git show -s --format="%cd" --date=short HEAD 2>/dev/null`.chuzzle }
+  end
+
+  def self.homebrew_version_string
+    if pretty_revision = git_short_head
+      last_commit = git_last_commit_date
+      "#{HOMEBREW_VERSION} (git revision #{pretty_revision}; last commit #{last_commit})"
+    else
+      "#{HOMEBREW_VERSION} (no git repository)"
+    end
   end
 
   def self.install_gem_setup_path!(gem, version = nil, executable = gem)
@@ -194,7 +230,7 @@ end
 
 # prints no output
 def quiet_system(cmd, *args)
-  Homebrew.system(cmd, *args) do
+  Homebrew._system(cmd, *args) do
     # Redirect output streams to `/dev/null` instead of closing as some programs
     # will fail to execute if they can't write to an open stream.
     $stdout.reopen("/dev/null")
@@ -221,30 +257,58 @@ def curl(*args)
   safe_system curl, *args
 end
 
-def puts_columns(items, star_items = [])
+def puts_columns(items, highlight = [])
   return if items.empty?
 
-  if star_items && star_items.any?
-    items = items.map { |item| star_items.include?(item) ? "#{item}*" : item }
+  unless $stdout.tty?
+    puts items
+    return
   end
 
-  if $stdout.tty?
-    # determine the best width to display for different console sizes
-    console_width = `/bin/stty size`.chomp.split(" ").last.to_i
-    console_width = 80 if console_width <= 0
-    longest = items.sort_by(&:length).last
-    optimal_col_width = (console_width.to_f / (longest.length + 2).to_f).floor
-    cols = optimal_col_width > 1 ? optimal_col_width : 1
+  # TTY case: If possible, output using multiple columns.
+  console_width = Tty.width
+  console_width = 80 if console_width <= 0
+  max_len = items.max_by(&:length).length
+  col_gap = 2 # number of spaces between columns
+  gap_str = " " * col_gap
+  cols = (console_width + col_gap) / (max_len + col_gap)
+  cols = 1 if cols < 1
+  rows = (items.size + cols - 1) / cols
+  cols = (items.size + rows - 1) / rows # avoid empty trailing columns
 
-    IO.popen("/usr/bin/pr -#{cols} -t -w#{console_width}", "w") { |io| io.puts(items) }
-  else
+  plain_item_lengths = items.map(&:length) if cols >= 2
+  if highlight && highlight.any?
+    items = items.map do |item|
+      highlight.include?(item) ? "#{Tty.highlight}#{item}#{Tty.reset}" : item
+    end
+  end
+
+  if cols >= 2
+    col_width = (console_width + col_gap) / cols - col_gap
+    items = items.each_with_index.map do |item, index|
+      item + "".ljust(col_width - plain_item_lengths[index])
+    end
+  end
+
+  if cols == 1
     puts items
+  else
+    rows.times do |row_index|
+      item_indices_for_row = row_index.step(items.size - 1, rows).to_a
+      puts items.values_at(*item_indices_for_row).join(gap_str)
+    end
   end
 end
 
 def which(cmd, path = ENV["PATH"])
   path.split(File::PATH_SEPARATOR).each do |p|
-    pcmd = File.expand_path(cmd, p)
+    begin
+      pcmd = File.expand_path(cmd, p)
+    rescue ArgumentError
+      # File.expand_path will raise an ArgumentError if the path is malformed.
+      # See https://github.com/Homebrew/homebrew/issues/32789
+      next
+    end
     return Pathname.new(pcmd) if File.file?(pcmd) && File.executable?(pcmd)
   end
   nil

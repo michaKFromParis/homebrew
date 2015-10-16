@@ -10,6 +10,7 @@ class Mpd < Formula
 
   bottle do
     cellar :any
+    sha256 "a09a3244adb04b5b1c9b0ed147df1af65a67ca0e1b3a902de1f6fa71b8c6bfa7" => :el_capitan
     sha256 "a6615df5ecee11a47d2e89492ba1d0eceb51bc832947fa819bab7b047ce09769" => :yosemite
     sha256 "e42806034935a83e74af7be956dd1bb2c01dacad3243713f0af806a16ac4068f" => :mavericks
     sha256 "6b2bd4efd0e48f603327446c40229fc67fc697b0011859cdefb3cb0fa3ef8059" => :mountain_lion
@@ -60,6 +61,7 @@ class Mpd < Formula
   depends_on "opus" => :optional        # Opus support
   depends_on "libvorbis" => :optional
   depends_on "libnfs" => :optional
+  depends_on "mad" => :optional
 
   def install
     # mpd specifies -std=gnu++0x, but clang appears to try to build
@@ -81,7 +83,7 @@ class Mpd < Formula
       --disable-libwrap
     ]
 
-    args << "--disable-mad"
+    args << "--disable-mad" if build.without? "mad"
     args << "--disable-curl" if MacOS.version <= :leopard
 
     args << "--enable-zzip" if build.with? "libzzip"

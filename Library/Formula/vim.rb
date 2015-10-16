@@ -1,11 +1,10 @@
 class Vim < Formula
   desc "Vi \"workalike\" with many additional features"
   homepage "http://www.vim.org/"
-  head "https://vim.googlecode.com/hg/"
-  # This package tracks debian-unstable: http://packages.debian.org/unstable/vim
-  url "https://mirrors.kernel.org/debian/pool/main/v/vim/vim_7.4.712.orig.tar.gz"
-  sha256 "b334ba9f6682c605d29fcf45e7fe246b88061736b86c3e7cdfa309404a66b55c"
-  revision 1
+  # *** Vim should be updated no more than once every 7 days ***
+  url "https://github.com/vim/vim/archive/v7.4.891.tar.gz"
+  sha256 "d9c0689cd3efb10ffc00b7f6b05304ee54be6bbbae85d882e0bce69b11aec523"
+  head "https://github.com/vim/vim.git"
 
   # We only have special support for finding depends_on :python, but not yet for
   # :ruby, :perl etc., so we use the standard environment that leaves the

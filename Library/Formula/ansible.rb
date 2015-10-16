@@ -1,16 +1,16 @@
 class Ansible < Formula
   desc "Automate deployment, configuration, and upgrading"
-  homepage "http://www.ansible.com/home"
-  url "http://releases.ansible.com/ansible/ansible-1.9.2.tar.gz"
-  sha256 "c25ef4738b08fdfb3094247c012f3fd1b29972acbd37f988070b2a85f5fbee00"
+  homepage "https://www.ansible.com/home"
+  url "https://releases.ansible.com/ansible/ansible-1.9.4.tar.gz"
+  sha256 "972c2face49f1577bd0ff7989440bfe2820e66fb10d7579915cc536bccfa6fe3"
 
   head "https://github.com/ansible/ansible.git", :branch => "devel"
 
   bottle do
-    revision 2
-    sha256 "f7556845bc1ef41bab0cf257c4e81a5dc934114c597df38ee60a31d335ff3f47" => :yosemite
-    sha256 "d3216454aacc4d592a49ccd2b2bd93fa158d77f24c64e7a527ec0017abfa347d" => :mavericks
-    sha256 "51d17eb2a112240dfd1e25e8544e89adda3ab37c68d32210f10287ede128fe6e" => :mountain_lion
+    revision 1
+    sha256 "99c8c244c342a354a7671ed8691fb33f06da0bb809bf9e6a5281e44d1d3ba569" => :el_capitan
+    sha256 "36b945f2e553bf5a34a284e38b0ca05cfb5d3ef75b5b54c41fa2374cd1e9af25" => :yosemite
+    sha256 "329169754d3a651eb21c364b00cf6b3a305377b0b0b4906f22801b8cb7b114be" => :mavericks
   end
 
   depends_on :python if MacOS.version <= :snow_leopard
@@ -56,7 +56,7 @@ class Ansible < Formula
 
   #
   # Required by the 'uri' core module
-  # See http://docs.ansible.com/uri_module.html#requirements)
+  # See https://docs.ansible.com/uri_module.html#requirements)
   #
   resource "httplib2" do
     url "https://pypi.python.org/packages/source/h/httplib2/httplib2-0.9.1.tar.gz"
@@ -483,6 +483,14 @@ class Ansible < Formula
     man1.install Dir["docs/man/man1/*.1"]
     bin.install Dir["#{libexec}/bin/*"]
     bin.env_script_all_files(libexec/"bin", :PYTHONPATH => ENV["PYTHONPATH"])
+  end
+
+  def caveats; <<-EOS.undent
+    Homebrew writes wrapper scripts that set PYTHONPATH in ansible's
+    execution environment, which is inherited by Python scripts invoked
+    by ansible. If this causes problems, you can modify your playbooks
+    to invoke python with -E, which causes python to ignore PYTHONPATH.
+    EOS
   end
 
   test do

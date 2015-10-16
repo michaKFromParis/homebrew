@@ -72,7 +72,7 @@ class Keg
   # These paths relative to the keg's share directory should always be real
   # directories in the prefix, never symlinks.
   SHARE_PATHS = %w[
-    aclocal doc info locale man
+    aclocal doc info java locale man
     man/man1 man/man2 man/man3 man/man4
     man/man5 man/man6 man/man7 man/man8
     man/cat1 man/cat2 man/cat3 man/cat4
@@ -183,9 +183,10 @@ class Keg
     path.rmtree
     path.parent.rmdir_if_possible
     remove_opt_record if optlinked?
+    remove_oldname_opt_record
   end
 
-  def unlink
+  def unlink(mode = OpenStruct.new)
     ObserverPathnameExtension.reset_counts!
 
     dirs = []
@@ -200,6 +201,12 @@ class Keg
 
         # check whether the file to be unlinked is from the current keg first
         if dst.symlink? && src == dst.resolved_path
+          if mode.dry_run
+            puts dst
+            Find.prune if src.directory?
+            next
+          end
+
           dst.uninstall_info if dst.to_s =~ INFOFILE_RX
           dst.unlink
           Find.prune if src.directory?
@@ -207,15 +214,22 @@ class Keg
       end
     end
 
-    remove_linked_keg_record if linked?
-
-    dirs.reverse_each(&:rmdir_if_possible)
+    unless mode.dry_run
+      remove_linked_keg_record if linked?
+      dirs.reverse_each(&:rmdir_if_possible)
+    end
 
     ObserverPathnameExtension.total
   end
 
   def lock
-    FormulaLock.new(name).with_lock { yield }
+    FormulaLock.new(name).with_lock do
+      if oldname_opt_record
+        FormulaLock.new(oldname_opt_record.basename.to_s).with_lock { yield }
+      else
+        yield
+      end
+    end
   end
 
   def completion_installed?(shell)
@@ -256,6 +270,14 @@ class Keg
     path.find(*args, &block)
   end
 
+  def oldname_opt_record
+    @oldname_opt_record ||= if (opt_dir = HOMEBREW_PREFIX/"opt").directory?
+      opt_dir.subdirs.detect do |dir|
+        dir.symlink? && dir != opt_record && path.parent == dir.resolved_path.parent
+      end
+    end
+  end
+
   def link(mode = OpenStruct.new)
     raise AlreadyLinkedError.new(self) if linked_keg_record.directory?
 
@@ -294,12 +316,15 @@ class Keg
       when "dtrace" then :mkpath
       when /^gdk-pixbuf/ then :mkpath
       when "ghc" then :mkpath
+      when /^gio/ then :mkpath
       when "lua" then :mkpath
+      when /^mecab/ then :mkpath
       when /^node/ then :mkpath
       when /^ocaml/ then :mkpath
       when /^perl5/ then :mkpath
       when "php" then :mkpath
       when /^python[23]\.\d/ then :mkpath
+      when /^R/ then :mkpath
       when /^ruby/ then :mkpath
       # Everything else is symlinked to the cellar
       else :link
@@ -329,9 +354,22 @@ class Keg
     ObserverPathnameExtension.total
   end
 
+  def remove_oldname_opt_record
+    return unless oldname_opt_record
+    return unless oldname_opt_record.resolved_path == path
+    @oldname_opt_record.unlink
+    @oldname_opt_record.parent.rmdir_if_possible
+    @oldname_opt_record = nil
+  end
+
   def optlink(mode = OpenStruct.new)
     opt_record.delete if opt_record.symlink? || opt_record.exist?
     make_relative_symlink(opt_record, path, mode)
+
+    if oldname_opt_record
+      oldname_opt_record.delete
+      make_relative_symlink(oldname_opt_record, path, mode)
+    end
   end
 
   def delete_pyc_files!
@@ -421,6 +459,7 @@ class Keg
 
       if src.symlink? || src.file?
         Find.prune if File.basename(src) == ".DS_Store"
+        Find.prune if src.realpath == dst
         # Don't link pyc files because Python overwrites these cached object
         # files and next time brew wants to link, the pyc file is in the way.
         if src.extname == ".pyc" && src.to_s =~ /site-packages/
