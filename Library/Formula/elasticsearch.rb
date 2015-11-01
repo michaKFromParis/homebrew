@@ -1,8 +1,10 @@
 class Elasticsearch < Formula
   desc "Distributed real-time search & analytics engine for the cloud"
   homepage "https://www.elastic.co/products/elasticsearch"
-  url "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.7.2.tar.gz"
-  sha256 "6f81935e270c403681e120ec4395c28b2ddc87e659ff7784608b86beb5223dd2"
+  url "https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.0.0/elasticsearch-2.0.0.tar.gz"
+  sha256 "b25f13f615337c2072964fd9fc5c7250f8a2a983b22198daf93548285d5d16df"
+
+  bottle :unneeded
 
   head do
     url "https://github.com/elasticsearch/elasticsearch.git"
@@ -45,15 +47,17 @@ class Elasticsearch < Formula
     # Set up Elasticsearch for local development:
     inreplace "#{prefix}/config/elasticsearch.yml" do |s|
       # 1. Give the cluster a unique name
-      s.gsub!(/#\s*cluster\.name\: elasticsearch/, "cluster.name: #{cluster_name}")
+      s.gsub!(/#\s*cluster\.name\: my-application/, "cluster.name: #{cluster_name}")
 
       # 2. Configure paths
-      s.sub!(%r{#\s*path\.data: /path/to.+$}, "path.data: #{var}/elasticsearch/")
-      s.sub!(%r{#\s*path\.logs: /path/to.+$}, "path.logs: #{var}/log/elasticsearch/")
-      s.sub!(%r{#\s*path\.plugins: /path/to.+$}, "path.plugins: #{var}/lib/elasticsearch/plugins")
+      s.sub!(%r{#\s*path\.data: /path/to.+$}, "path.data: #{var}/elasticsearch")
+      s.sub!(%r{#\s*path\.logs: /path/to.+$}, "path.logs: #{var}/log/elasticsearch")
 
       # 3. Bind to loopback IP for laptops roaming different networks
       s.gsub!(/#\s*network\.host\: [^\n]+/, "network.host: 127.0.0.1")
+
+      # 4. Add config options not included in the example config file
+      s << "\npath.plugins: #{var}/lib/elasticsearch/plugins"
     end
 
     inreplace "#{bin}/elasticsearch.in.sh" do |s|
@@ -126,6 +130,6 @@ class Elasticsearch < Formula
   end
 
   test do
-    system "#{bin}/plugin", "--list"
+    system "#{bin}/plugin", "list"
   end
 end
