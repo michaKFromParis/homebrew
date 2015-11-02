@@ -29,18 +29,25 @@ class Wine < Formula
   end
 
   devel do
-    url "https://downloads.sourceforge.net/project/wine/Source/wine-1.7.52.tar.bz2"
-    mirror "http://mirrors.ibiblio.org/wine/source/1.7/wine-1.7.52.tar.bz2"
-    sha256 "0773b32a0c358323db4c383ceb1e9e28d5d4ed4ea37570af2bcb41fecf0d554b"
+    url "https://downloads.sourceforge.net/project/wine/Source/wine-1.7.54.tar.bz2"
+    mirror "https://ftp.winehq.org/pub/wine/source/1.7/wine-1.7.54.tar.bz2"
+    sha256 "e0f311f392815468df774b33312cde80bf1ff3a894c9c2b462825fd49619bb27"
 
     depends_on "samba" => :optional
     depends_on "gnutls"
 
-    # Patch to fix screen-flickering issues. Still relevant on 1.7.23.
+    # Patch to fix screen-flickering issues. Still relevant on 1.7.53.
     # https://bugs.winehq.org/show_bug.cgi?id=34166
     patch do
       url "https://bugs.winehq.org/attachment.cgi?id=52485"
       sha256 "59f1831a1b49c1b7a4c6e6af7e3f89f0bc60bec0bead645a615b251d37d232ac"
+    end
+
+    # Patch to fix texture compression issues. Still relevant on 1.7.53.
+    # https://bugs.winehq.org/show_bug.cgi?id=14939
+    patch do
+      url "https://bugs.winehq.org/attachment.cgi?id=52384"
+      sha256 "30766403f5064a115f61de8cacba1defddffe2dd898b59557956400470adc699"
     end
   end
 
@@ -157,9 +164,6 @@ class Wine < Formula
     # and name our startup script wine
     mv bin/"wine", bin/"wine.bin"
     (bin/"wine").write(wine_wrapper)
-
-    # Don't need Gnome desktop support
-    (share/"applications").rmtree
   end
 
   def caveats

@@ -1,6 +1,5 @@
 require "pathname"
 require "exceptions"
-require "os/mac"
 require "utils/json"
 require "utils/inreplace"
 require "utils/popen"
@@ -43,7 +42,7 @@ class Tty
     end
 
     def highlight
-      bold 43
+      bold 39
     end
 
     def width
@@ -252,7 +251,7 @@ def curl(*args)
 
   args = [flags, HOMEBREW_USER_AGENT, *args]
   args << "--verbose" if ENV["HOMEBREW_CURL_VERBOSE"]
-  args << "--silent" unless $stdout.tty?
+  args << "--silent" if !$stdout.tty? || ENV["TRAVIS"]
 
   safe_system curl, *args
 end
@@ -420,10 +419,10 @@ module GitHub
     def initialize(reset, error)
       super <<-EOS.undent
         GitHub #{error}
-        Try again in #{pretty_ratelimit_reset(reset)}, or create an personal access token:
-          https://github.com/settings/tokens
+        Try again in #{pretty_ratelimit_reset(reset)}, or create a personal access token:
+          #{Tty.em}https://github.com/settings/tokens/new?scopes=&description=Homebrew#{Tty.reset}
         and then set the token as: HOMEBREW_GITHUB_API_TOKEN
-                    EOS
+      EOS
     end
 
     def pretty_ratelimit_reset(reset)
@@ -440,8 +439,8 @@ module GitHub
       super <<-EOS.undent
         GitHub #{error}
         HOMEBREW_GITHUB_API_TOKEN may be invalid or expired, check:
-          https://github.com/settings/tokens
-                    EOS
+          #{Tty.em}https://github.com/settings/tokens#{Tty.reset}
+      EOS
     end
   end
 
