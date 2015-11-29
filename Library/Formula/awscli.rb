@@ -1,15 +1,15 @@
 class Awscli < Formula
   desc "Official Amazon AWS command-line interface"
   homepage "https://aws.amazon.com/cli/"
-  url "https://pypi.python.org/packages/source/a/awscli/awscli-1.9.2.tar.gz"
-  mirror "https://github.com/aws/aws-cli/archive/1.9.2.tar.gz"
-  sha256 "948ce478238f04b36c654203915f4099b997ec6d68fc7e694fe4b7377050f041"
+  url "https://pypi.python.org/packages/source/a/awscli/awscli-1.9.9.tar.gz"
+  mirror "https://github.com/aws/aws-cli/archive/1.9.9.tar.gz"
+  sha256 "1b90918af742e7ffe1615cf76645668b313c3aa433568369d8f8fb7ed3edf114"
 
   bottle do
     cellar :any_skip_relocation
-    sha256 "b74f1b19a0e4476b5177ce299c4c900f7c57b204562582c8e0c9e603f4e07b9f" => :el_capitan
-    sha256 "5e4769aabacd3ed9be933f0259afb79fb5c9ad6ad495da3cd537858c62cdb50b" => :yosemite
-    sha256 "b6f28d61544b2290e4e81945d36bd5dcba33e531fdcf642c067c776418465e51" => :mavericks
+    sha256 "2d6674db9bc55846ad2ce402b2b28081cb9b55e9e5fb595f0d3876f374a0ed8d" => :el_capitan
+    sha256 "3b39f7e573f8940324dd7a722b67c1edd88b822afae1485b40aec971dfc93d19" => :yosemite
+    sha256 "0b6cc182a37c1d57efbc2b2604bb363b75f459916beaea83fdb75b69d1e3f8c4" => :mavericks
   end
 
   head do
@@ -19,8 +19,7 @@ class Awscli < Formula
       url "https://github.com/boto/botocore.git", :branch => "develop"
     end
 
-    resource "bcdoc" do
-      url "https://github.com/boto/bcdoc.git", :branch => "develop"
+    resource "jmespath" do
       url "https://github.com/boto/jmespath.git", :branch => "develop"
     end
   end
@@ -45,23 +44,18 @@ class Awscli < Formula
   end
 
   resource "jmespath" do
-    url "https://pypi.python.org/packages/source/j/jmespath/jmespath-0.7.1.tar.gz"
-    sha256 "cd5a12ee3dfa470283a020a35e69e83b0700d44fe413014fd35ad5584c5f5fd1"
+    url "https://pypi.python.org/packages/source/j/jmespath/jmespath-0.9.0.tar.gz"
+    sha256 "08dfaa06d4397f283a01e57089f3360e3b52b5b9da91a70e1fd91e9f0cdd3d3d"
   end
 
   resource "botocore" do
-    url "https://pypi.python.org/packages/source/b/botocore/botocore-1.3.2.tar.gz"
-    sha256 "af8176c95244bd9195afb4cf2a2c21a605e884cf6886889c6d983d2adda844ad"
+    url "https://pypi.python.org/packages/source/b/botocore/botocore-1.3.9.tar.gz"
+    sha256 "a41e1ba136696684c8b46f21833ae0c3616986fe86029df6587bbf577d389703"
   end
 
   resource "docutils" do
     url "https://pypi.python.org/packages/source/d/docutils/docutils-0.12.tar.gz"
     sha256 "c7db717810ab6965f66c8cf0398a98c9d8df982da39b4cd7f162911eb89596fa"
-  end
-
-  resource "bcdoc" do
-    url "https://pypi.python.org/packages/source/b/bcdoc/bcdoc-0.16.0.tar.gz"
-    sha256 "f568c182e06883becf7196f227052435cffd45604700c82362ca77d3427b6202"
   end
 
   resource "pyasn1" do

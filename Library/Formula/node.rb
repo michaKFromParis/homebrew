@@ -1,14 +1,15 @@
 class Node < Formula
   desc "Platform built on the V8 JavaScript runtime to build network applications"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v5.0.0/node-v5.0.0.tar.gz"
-  sha256 "698d9662067ae6a20a2586e5c09659735fc0050769a0d8f76f979189ceaccdf4"
+  url "https://nodejs.org/dist/v5.1.0/node-v5.1.0.tar.gz"
+  sha256 "25b2d3b7dd57fe47a483539fea240a3c6bbbdab4d89a45a812134cf1380ecb94"
   head "https://github.com/nodejs/node.git"
 
   bottle do
-    sha256 "53de115aa6307f01f3e34f560f1258441441336b515287101556bdd4cc753d60" => :el_capitan
-    sha256 "4e7e42bda989b3acc24168e00c62fe4ff5fa09e788c5d84c1add1ef27ae59a5b" => :yosemite
-    sha256 "b6a4b8e9648c0fc982e2284fecf19d3cc007dc7cf93788f573e50d08a399cebd" => :mavericks
+    revision 1
+    sha256 "485007341181ec9842a4fcef051336037cdfd48075490af57d8f82d2d1a829e6" => :el_capitan
+    sha256 "a21e68fc0915e0834b0dea8a4e4afa3df59dd6417704ca4e4bb86c8b13016b20" => :yosemite
+    sha256 "194788b88b5846de2304a6a8c953b4df654556621a0e37161b718a96c4428522" => :mavericks
   end
 
   option "with-debug", "Build with debugger hooks"
@@ -23,17 +24,21 @@ class Node < Formula
   depends_on "pkg-config" => :build
   depends_on "openssl" => :optional
 
-  fails_with :llvm do
-    build 2326
+  # Per upstream - "Need g++ 4.8 or clang++ 3.4".
+  fails_with :clang if MacOS.version <= :snow_leopard
+  fails_with :llvm
+  fails_with :gcc_4_0
+  fails_with :gcc
+  ("4.3".."4.7").each do |n|
+    fails_with :gcc => n
   end
 
-  fails_with :gcc do
-    cause "unrecognized command line option '-std=gnu++0x'"
-  end
-
+  # We track major/minor from upstream Node releases.
+  # We will accept *important* npm patch releases when necessary.
+  # https://github.com/Homebrew/homebrew/pull/46098#issuecomment-157802319
   resource "npm" do
-    url "https://registry.npmjs.org/npm/-/npm-3.3.9.tgz"
-    sha256 "b406bfc670045c2b92432aff419fe22ff28fd439bb0ef4faa14fd6f16bda0c22"
+    url "https://registry.npmjs.org/npm/-/npm-3.3.12.tgz"
+    sha256 "09475d7096731d93c0aacd7dfe58794d67c52ee6562675aee6c1f734ddba8158"
   end
 
   resource "icu4c" do
@@ -69,6 +74,10 @@ class Node < Formula
       cd buildpath/"npm_install" do
         system "./configure", "--prefix=#{libexec}/npm"
         system "make", "install"
+        # `package.json` has relative paths to the npm_install directory.
+        # This copies back over the vanilla `package.json` that is expected.
+        # https://github.com/Homebrew/homebrew/issues/46131#issuecomment-157845008
+        cp buildpath/"npm_install/package.json", libexec/"npm/lib/node_modules/npm"
       end
 
       if build.with? "completion"
@@ -117,6 +126,14 @@ class Node < Formula
         Homebrew has NOT installed npm. If you later install it, you should supplement
         your NODE_PATH with the npm module folder:
           #{HOMEBREW_PREFIX}/lib/node_modules
+      EOS
+    end
+
+    if build.without? "full-icu"
+      s += <<-EOS.undent
+        Please note by default only English locale support is provided. If you need
+        full locale support you should:
+          `brew reinstall node --with-full-icu`
       EOS
     end
 

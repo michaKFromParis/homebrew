@@ -1,13 +1,13 @@
 class Mkvtoolnix < Formula
   desc "Matroska media files manipulation tools"
   homepage "https://www.bunkus.org/videotools/mkvtoolnix/"
-  url "https://www.bunkus.org/videotools/mkvtoolnix/sources/mkvtoolnix-8.5.1.tar.xz"
-  sha256 "db9ae151ef236afac190c0137d8d4df4e43c105dbd298e3913b5afae1fdd5b43"
+  url "https://www.bunkus.org/videotools/mkvtoolnix/sources/mkvtoolnix-8.6.0.tar.xz"
+  sha256 "5e9f604b38ec8b28a4c54ee7765919cc32ed9b97cea95ee34893f5fe6bf6c3bd"
 
   bottle do
-    sha256 "a636ec0b5d4951d972eaa4b6696bbd94843fd68765cb8bdab53b3793f5a6b4a8" => :el_capitan
-    sha256 "d33130834424f3f2b347ee0104d8396a3239184a142151e3df15d86c754541ec" => :yosemite
-    sha256 "896c637b08ea859563a793cdb5629389e320334ca747bb0d56b555f6b3e83689" => :mavericks
+    sha256 "2de09548cd02c4fe475ead15bf091b1d956d95c29a4da50572bd9d6cec8c367b" => :el_capitan
+    sha256 "faaa39cb9392de780b5c0ac85bbc6f287c46387a2180509f6fca2c0a4ac8f709" => :yosemite
+    sha256 "a102c55ab36e965acca0359a2f9a5dd98f94ee7716b60568e869ef6ce8851745" => :mavericks
   end
 
   head do
@@ -17,7 +17,6 @@ class Mkvtoolnix < Formula
     depends_on "libtool" => :build
   end
 
-  option "with-wxmac", "Build with wxWidgets GUI"
   option "with-qt5", "Build with QT GUI"
 
   depends_on "pkg-config" => :build
@@ -27,7 +26,6 @@ class Mkvtoolnix < Formula
   depends_on "flac" => :recommended
   depends_on "libmagic" => :recommended
   depends_on "lzo" => :optional
-  depends_on "wxmac" => :optional
   depends_on "qt5" => :optional
   depends_on "gettext" => :optional
 
@@ -59,18 +57,9 @@ class Mkvtoolnix < Formula
       --prefix=#{prefix}
       --without-curl
       --with-boost=#{boost.opt_prefix}
+      --with-extra-includes=#{ogg.opt_include};#{vorbis.opt_include};#{ebml.opt_include};#{matroska.opt_include}
+      --with-extra-libs=#{ogg.opt_lib};#{vorbis.opt_lib};#{ebml.opt_lib};#{matroska.opt_lib}
     ]
-
-    if build.with? "wxmac"
-      wxmac = Formula["wxmac"]
-      args << "--with-extra-includes=#{ogg.opt_include};#{vorbis.opt_include};#{ebml.opt_include};#{matroska.opt_include};#{wxmac.opt_include}"
-      args << "--with-extra-libs=#{ogg.opt_lib};#{vorbis.opt_lib};#{ebml.opt_lib};#{matroska.opt_lib};#{wxmac.opt_lib}"
-      args << "--enable-wxwidgets"
-    else
-      args << "--with-extra-includes=#{ogg.opt_include};#{vorbis.opt_include};#{ebml.opt_include};#{matroska.opt_include}"
-      args << "--with-extra-libs=#{ogg.opt_lib};#{vorbis.opt_lib};#{ebml.opt_lib};#{matroska.opt_lib}"
-      args << "--disable-wxwidgets"
-    end
 
     if build.with?("qt5")
       qt5 = Formula["qt5"]
@@ -78,7 +67,6 @@ class Mkvtoolnix < Formula
       args << "--with-moc=#{qt5.opt_bin}/moc"
       args << "--with-uic=#{qt5.opt_bin}/uic"
       args << "--with-rcc=#{qt5.opt_bin}/rcc"
-      args << "--with-mkvtoolnix-gui"
       args << "--enable-qt"
     else
       args << "--disable-qt"
