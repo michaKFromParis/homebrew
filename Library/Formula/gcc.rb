@@ -25,11 +25,13 @@ class Gcc < Formula
   mirror "https://ftp.gnu.org/gnu/gcc/gcc-5.2.0/gcc-5.2.0.tar.bz2"
   sha256 "5f835b04b5f7dd4f4d2dc96190ec1621b8d89f2dc6f638f9f8bc1b1014ba8cad"
 
+  head "svn://gcc.gnu.org/svn/gcc/trunk"
+
   bottle do
-    revision 3
-    sha256 "c52a4d2edf5261e25803e2ee67f5e477b9ec0d079c11348822efb34c369ddfce" => :el_capitan
-    sha256 "4596a645c71a10107fd786fec5400089dbc2ffe0aad568f548b3300ae3e9d758" => :yosemite
-    sha256 "29a8d7046b27a492bd41481a422810d9d8a4b037e1147559200b91fc0bbdb086" => :mavericks
+    revision 4
+    sha256 "b90aaf44d772f0ad864e17f8454ef67e280bf5d5763ca7f74cd20890e4165470" => :el_capitan
+    sha256 "4c829be9f06a6cc0b782a9e2ad1f1a7e6d511f40fc940805dde6ed97ef5062bc" => :yosemite
+    sha256 "c7ae5ce395cd50facbe15d001fee6736334da7ca433c9d6178fd261875446090" => :mavericks
   end
 
   option "with-java", "Build the gcj compiler"
@@ -115,7 +117,7 @@ class Gcc < Formula
       "--with-build-config=bootstrap-debug",
       "--disable-werror",
       "--with-pkgversion=Homebrew #{name} #{pkg_version} #{build.used_options*" "}".strip,
-      "--with-bugurl=https://github.com/Homebrew/homebrew/issues"
+      "--with-bugurl=https://github.com/Homebrew/homebrew/issues",
     ]
 
     # "Building GCC with plugin support requires a host that supports
@@ -177,7 +179,7 @@ class Gcc < Formula
         "#{lib}/gcc/#{version_suffix}/logging.properties",
         "#{lib}/gcc/#{version_suffix}/security/classpath.security",
         "#{lib}/gcc/#{version_suffix}/i386/logging.properties",
-        "#{lib}/gcc/#{version_suffix}/i386/security/classpath.security"
+        "#{lib}/gcc/#{version_suffix}/i386/security/classpath.security",
       ]
       config_files.each do |file|
         add_suffix file, version_suffix if File.exist? file
