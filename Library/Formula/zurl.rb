@@ -1,25 +1,30 @@
 class Zurl < Formula
   desc "HTTP and WebSocket client worker with ZeroMQ interface"
   homepage "https://github.com/fanout/zurl"
-  url "https://dl.bintray.com/fanout/source/zurl-1.4.10.tar.bz2"
-  sha256 "4e430166171edff18c2557b26365e97ca7f4f56447afb3580e044919016ff788"
+  url "https://dl.bintray.com/fanout/source/zurl-1.5.0.tar.bz2"
+  sha256 "102456174569d882c77dde80669c51bee4a418c5ed81a27ea15d7a0810d1a555"
+
+  # ensure unit tests don't install on 1.5.0. remove after next release
+  patch do
+    url "https://github.com/fanout/zurl/commit/6f727e9e26054889ced261993e91f11dea3a1b5c.patch"
+    sha256 "7fff340cec94d6c4883aacbf991ac97ee963e8628cda0ad3c67daddb759a26a9"
+  end
 
   bottle do
     cellar :any
-    sha256 "9661548ae2d9f4a54416d95c57e1b3b6b090caa047cc932d551ba26cbffec17e" => :el_capitan
-    sha256 "33b3c72805f2e85a5d7681b56e14f96c999ca77ed11396e2c4cd8e3f27a19949" => :yosemite
-    sha256 "a5c4d4b61aebbdb5e209240ef090a5d33971966af1ac7d3ef0f5726aacc73f51" => :mavericks
+    sha256 "0a60f5c9d1d7e47e8b9ed72ddcc82a4e8dd45d3a731686e3194f91be0d948a64" => :el_capitan
+    sha256 "4f3816d8d565b2ec24ec3607d2ce678cfcea5a131548e4dbba834a7f82110f6a" => :yosemite
+    sha256 "752d05f0a4d681cf1c7e05972f502bda4b580fdc483779b6cd1709cde14282f9" => :mavericks
   end
 
   depends_on "pkg-config" => :build
   depends_on "curl" if MacOS.version < :lion
-  depends_on "qt"
+  depends_on "qt5"
   depends_on "zeromq"
-  depends_on "qjson"
 
   resource "pyzmq" do
-    url "https://pypi.python.org/packages/source/p/pyzmq/pyzmq-14.6.0.tar.gz"
-    sha256 "7746806ff94f1e8c1e843644c6bbd3b9aaeb1203c2eaf38879adc23dbd5c35bb"
+    url "https://pypi.python.org/packages/source/p/pyzmq/pyzmq-15.2.0.tar.gz"
+    sha256 "2dafa322670a94e20283aba2a44b92134d425bd326419b68ad4db8d0831a26ec"
   end
 
   def install

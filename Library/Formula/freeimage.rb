@@ -30,6 +30,11 @@ class Freeimage < Formula
   option "with-10.7", "support OSX 10.7 and up"
   option "with-10.8", "support OSX 10.8 and up"
   option "with-10.9", "support OSX 10.9 and up"
+  # fix GCC 5.0 compile.
+  patch do
+    url "https://raw.githubusercontent.com/Homebrew/patches/f2b4fb19/freeimage/gcc5.diff"
+    sha256 "da0e052e2519b61b57fe9f371b517114f8be81dd2d3dd1721b8fb630dc67edff"
+  end
 
   def install
     ENV.universal_binary if build.universal?

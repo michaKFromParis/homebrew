@@ -1,15 +1,15 @@
 class Arangodb < Formula
   desc "Universal open-source database with a flexible data model"
   homepage "https://www.arangodb.com/"
-  url "https://www.arangodb.com/repositories/Source/ArangoDB-2.7.2.tar.gz"
-  sha256 "e306bec9ba7068c40063e496ab7793e28a085ede131764f4620c06a514d94bdb"
+  url "https://www.arangodb.com/repositories/Source/ArangoDB-2.8.2.tar.gz"
+  sha256 "70a546e1e0f5a56d74af0cedbfe6b2c53b04ca09ca1982f9713231112490c1de"
 
   head "https://github.com/arangodb/arangodb.git", :branch => "unstable"
 
   bottle do
-    sha256 "8a6a3b00127328cf34c7bc251bc43fc44d3e554d076f12c322695c4f900f3518" => :el_capitan
-    sha256 "8e75d249a593402c0cdab3f1b59d2787b2d7fa09013c470b77cd1538b01fdc11" => :yosemite
-    sha256 "c7852e150a935856dc542f9ab76ed00f58bf7493b78ec81bbeaee31b60fe2cb1" => :mavericks
+    sha256 "75ec22c06d2bd0cab47765e1918d8e0cc36ce6a3f1dbcbd081226176c13450db" => :el_capitan
+    sha256 "60b332f4b8d9bb41f822d3b7a19d1913f699077dffa270cf7023113127aac786" => :yosemite
+    sha256 "13dfd3276c33fbe9cab2cbef782125b42618ce32c30838c1946e1eca6a029927" => :mavericks
   end
 
   depends_on "go" => :build
@@ -20,6 +20,11 @@ class Arangodb < Formula
   fails_with :clang do
     build 600
     cause "Fails with compile errors"
+  end
+
+  fails_with :clang do
+    build 702
+    cause "clang and/or stdlibc++ is 7x slower than in other versions"
   end
 
   def install
@@ -40,12 +45,12 @@ class Arangodb < Formula
 
     system "./configure", *args
     system "make", "install"
-
-    (var/"arangodb").mkpath
-    (var/"log/arangodb").mkpath
   end
 
   def post_install
+    (var/"arangodb").mkpath
+    (var/"log/arangodb").mkpath
+
     system "#{sbin}/arangod" + (build.head? ? "-unstable" : ""), "--upgrade", "--log.file", "-"
   end
 
