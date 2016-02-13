@@ -1,18 +1,17 @@
 class Libsndfile < Formula
   desc "C library for files containing sampled sound"
   homepage "http://www.mega-nerd.com/libsndfile/"
-  url "http://www.mega-nerd.com/libsndfile/files/libsndfile-1.0.25.tar.gz"
-  mirror "https://mirrors.kernel.org/debian/pool/main/libs/libsndfile/libsndfile_1.0.25.orig.tar.gz"
-  sha256 "59016dbd326abe7e2366ded5c344c853829bebfd1702ef26a07ef662d6aa4882"
+  url "http://www.mega-nerd.com/libsndfile/files/libsndfile-1.0.26.tar.gz"
+  sha256 "cd6520ec763d1a45573885ecb1f8e4e42505ac12180268482a44b28484a25092"
 
   bottle do
     cellar :any
-    revision 1
-    sha256 "55cacc1278d4f6d2d4843670b8313f1b06ffdaf9bad4c7e9498f2df5246726ee" => :el_capitan
-    sha256 "a38457a5911d0b90af9111a45645cdfd5db8c6d04b735cf739140b45a64bcc73" => :yosemite
-    sha256 "417c53b60c1841abb95ed9c315dbec323268b64f40114dd8e02101db144716c0" => :mavericks
-    sha256 "dd758a335e998b68e8a673ec64ab989f2257b0895a485fc7f0a13ccec707e75a" => :mountain_lion
+    sha256 "14fb9d6ecd9bf39fce4d59b7d772edad94566e60e922724f014f034f7e343992" => :el_capitan
+    sha256 "5817f2567471377ce161172d58059cd0cfcbbe9cb1e5f6eb80b501a629d40b5f" => :yosemite
+    sha256 "a5700a479cafd48d22e2032d95207abcd2d43fc56015348684522b8a61eb4f04" => :mavericks
   end
+
+  option :universal
 
   depends_on "pkg-config" => :build
   depends_on "autoconf" => :build
